@@ -8,14 +8,11 @@ buildscript {
 }
 plugins {
     id 'org.springframework.boot' version '2.4.9'
-    id "com.github.davidmc24.gradle.plugin.avro" version '1.2.1'
     id 'java'
 }
 apply plugin: "com.diffplug.gradle.spotless"
 apply plugin: 'io.spring.dependency-management'
 
-group = 'hatanaka'
-version = '0.0.1-SNAPSHOT'
 sourceCompatibility = '11'
 
 configurations {
@@ -40,8 +37,6 @@ dependencies {
     implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.5'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: '2.5.3'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jersey', version: '2.5.3'
-    implementation group: 'io.confluent', name: 'kafka-avro-serializer', version: '6.2.0'
-    implementation group: 'io.confluent', name: 'kafka-schema-registry-client', version: '6.2.0'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -92,32 +87,4 @@ spotless {
         endWithNewline()
         replaceRegex 'Remove line breaks between consecutive closing parentheses', /\)\n[\s]+\)\n/, '))\n'
     }
-}
-
-task generateAvro(type: com.github.davidmc24.gradle.plugin.avro.GenerateAvroJavaTask) {
-    source("src/main/resources/avro")
-    outputDir = file("src/main/java")
-}
-
-configurations.findAll { configuration ->
-    [
-        "annotationProcessor",
-        "asciidoctor",
-        "compile",
-        "compileClasspath",
-        "gems",
-        "jacocoAgent",
-        "jacocoAnt",
-        "jrubyExec",
-        "runtimeClasspath",
-        "testAnnotationProcessor",
-        "testCompileClasspath",
-        "testRuntimeClasspath"
-    ].any { configuration.name == it }
-}.each {
-    it.resolutionStrategy.activateDependencyLocking()
-}
-
-dependencyLocking {
-    lockMode = LockMode.STRICT
 }

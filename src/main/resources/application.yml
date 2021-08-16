@@ -22,4 +22,3 @@ kafka:
     url: localhost:9092
   consumerGroup: cgroup
   autoOffset: earliest
-  schemaRegistry: http://localhost:8081

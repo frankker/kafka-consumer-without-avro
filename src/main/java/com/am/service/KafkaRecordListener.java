@@ -1,6 +1,6 @@
 package com.am.service;
 
-import example.kafka.dto.AssetDto;
+import com.am.dto.AssetDto;
 import java.text.MessageFormat;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -9,9 +9,9 @@ import org.springframework.messaging.handler.annotation.Payload;
 
 public class KafkaRecordListener {
 
-  @KafkaListener(topics = "asset05")
+  @KafkaListener(topics = "asset08")
   void listenToAsset(
-      @Payload AssetDto message,
+      @Payload String message,
       @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
       @Header(KafkaHeaders.OFFSET) int offset) {
     System.out.println("===============Kafka Asset Message================");

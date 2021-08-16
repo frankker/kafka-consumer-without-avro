@@ -1,17 +1,10 @@
-example/kafka/dto/AlertDto.java
- example.kafka.dto.AlertDto
- example.kafka.dto.AlertDto$Builder
-com/am/config/KafkaConfiguration.java
- com.am.config.KafkaConfiguration
-com/am/service/KafkaRecordListener.java
- com.am.service.KafkaRecordListener
-com/am/KafkaProducerConsumerApplication.java
- com.am.KafkaProducerConsumerApplication
-example/kafka/dto/Employee.java
- example.kafka.dto.Employee
- example.kafka.dto.Employee$Builder
-example/kafka/dto/AssetDto.java
- example.kafka.dto.AssetDto
- example.kafka.dto.AssetDto$Builder
 com/am/config/KafkaHealthIndicator.java
  com.am.config.KafkaHealthIndicator
+com/am/dto/AssetDto.java
+ com.am.dto.AssetDto
+com/am/KafkaProducerConsumerApplication.java
+ com.am.KafkaProducerConsumerApplication
+com/am/service/KafkaRecordListener.java
+ com.am.service.KafkaRecordListener
+com/am/config/KafkaConfiguration.java
+ com.am.config.KafkaConfiguration
