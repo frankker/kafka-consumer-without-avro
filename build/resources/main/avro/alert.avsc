@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "AlertDto",
+  "namespace": "example.kafka.dto",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "topic",
+      "type": "string"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    }]
+}

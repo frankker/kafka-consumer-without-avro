@@ -1,0 +1,58 @@
+{
+    "compileClasspath": {
+        "org.projectlombok:lombok": {
+            "locked": "1.18.20"
+        },
+        "org.springframework.boot:spring-boot-starter-actuator": {
+            "locked": "2.5.3"
+        },
+        "org.springframework.boot:spring-boot-starter-web": {
+            "locked": "2.5.3"
+        },
+        "org.springframework.kafka:spring-kafka": {
+            "locked": "2.7.5"
+        }
+    },
+    "runtimeClasspath": {
+        "org.springframework.boot:spring-boot-starter-actuator": {
+            "locked": "2.5.3"
+        },
+        "org.springframework.boot:spring-boot-starter-web": {
+            "locked": "2.5.3"
+        },
+        "org.springframework.kafka:spring-kafka": {
+            "locked": "2.7.5"
+        }
+    },
+    "testCompileClasspath": {
+        "org.junit.jupiter:junit-jupiter-api": {
+            "locked": "5.7.0"
+        },
+        "org.springframework.boot:spring-boot-starter-actuator": {
+            "locked": "2.5.3"
+        },
+        "org.springframework.boot:spring-boot-starter-web": {
+            "locked": "2.5.3"
+        },
+        "org.springframework.kafka:spring-kafka": {
+            "locked": "2.7.5"
+        }
+    },
+    "testRuntimeClasspath": {
+        "org.junit.jupiter:junit-jupiter-api": {
+            "locked": "5.7.0"
+        },
+        "org.junit.jupiter:junit-jupiter-engine": {
+            "locked": "5.7.0"
+        },
+        "org.springframework.boot:spring-boot-starter-actuator": {
+            "locked": "2.5.3"
+        },
+        "org.springframework.boot:spring-boot-starter-web": {
+            "locked": "2.5.3"
+        },
+        "org.springframework.kafka:spring-kafka": {
+            "locked": "2.7.5"
+        }
+    }
+}

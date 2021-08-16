@@ -1,0 +1,123 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:4.5.1"
+    }
+}
+plugins {
+    id 'org.springframework.boot' version '2.4.9'
+    id "com.github.davidmc24.gradle.plugin.avro" version '1.2.1'
+    id 'java'
+}
+apply plugin: "com.diffplug.gradle.spotless"
+apply plugin: 'io.spring.dependency-management'
+
+group = 'hatanaka'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url = 'http://packages.confluent.io/maven/' }
+}
+
+ext {
+    confluentVersion = '6.2.0'
+}
+
+dependencies {
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '2.5.3'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.5.3'
+    implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.5'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: '2.5.3'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jersey', version: '2.5.3'
+    implementation group: 'io.confluent', name: 'kafka-avro-serializer', version: '6.2.0'
+    implementation group: 'io.confluent', name: 'kafka-schema-registry-client', version: '6.2.0'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+check.dependsOn 'spotlessCheck'
+
+spotless {
+
+    def formatterGroovyConfig = rootProject.file('./formatter.properties')
+
+    java {
+        paddedCell()
+        target fileTree('.') {
+            include '**/*.java'
+            exclude '**/build/**'
+        }
+        googleJavaFormat()
+        removeUnusedImports()
+    }
+    groovyGradle {
+        paddedCell()
+        target fileTree('.') {
+            include '**/*.gradle'
+            exclude '**/build/**'
+        }
+        // Generate new formatter.properties file in eclipse:
+        // https://github.com/diffplug/spotless/blob/master/ECLIPSE_SCREENSHOTS.md
+        greclipse().configFile formatterGroovyConfig
+        indentWithSpaces(4)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format 'misc', {
+        target fileTree('.') {
+            include '**/*.md', '**/*.adoc', '**/.gitignore', '**/*.properties', '**/*.config'
+            exclude '**/build/**', '**/gradle/**', 'bin/**', 'src/main/resources/**', '.gradle/**'
+        }
+
+        indentWithSpaces(2)
+        trimTrailingWhitespace()
+        endWithNewline()
+        replaceRegex 'Remove line breaks between consecutive closing parentheses', /\)\n[\s]+\)\n/, '))\n'
+    }
+}
+
+task generateAvro(type: com.github.davidmc24.gradle.plugin.avro.GenerateAvroJavaTask) {
+    source("src/main/resources/avro")
+    outputDir = file("src/main/java")
+}
+
+configurations.findAll { configuration ->
+    [
+        "annotationProcessor",
+        "asciidoctor",
+        "compile",
+        "compileClasspath",
+        "gems",
+        "jacocoAgent",
+        "jacocoAnt",
+        "jrubyExec",
+        "runtimeClasspath",
+        "testAnnotationProcessor",
+        "testCompileClasspath",
+        "testRuntimeClasspath"
+    ].any { configuration.name == it }
+}.each {
+    it.resolutionStrategy.activateDependencyLocking()
+}
+
+dependencyLocking {
+    lockMode = LockMode.STRICT
+}

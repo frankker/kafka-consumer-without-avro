@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "Employee",
+  "namespace": "example.kafka.dto",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    },
+    {
+      "name": "topic",
+      "type": "string"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    }]
+}

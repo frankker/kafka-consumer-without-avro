@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "AssetDto",
+  "namespace": "example.kafka.dto",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "tenantId",
+      "type": "long"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    }]
+}

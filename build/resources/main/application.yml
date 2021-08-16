@@ -1,0 +1,25 @@
+server:
+  port: 8083
+
+advertised:
+  host:
+    name: localhost
+
+management:
+  endpoint:
+    info:
+      enabled: true
+    health:
+      show-details: always
+  endpoints:
+    enabled-by-default: true
+  health:
+    kafka:
+      enabled: true
+
+kafka:
+  broker1:
+    url: localhost:9092
+  consumerGroup: cgroup
+  autoOffset: earliest
+  schemaRegistry: http://localhost:8081
