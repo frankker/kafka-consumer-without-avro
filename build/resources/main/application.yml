@@ -24,7 +24,7 @@ kafka:
   consumerGroup: cgroup
   autoOffset: earliest
   security:
-    protocol: SASL_PLAINTEXT
-    username: USERNAME
-    password: PASSWORD
-    mechanism: SCRAM-SHA-512
+    protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_PLAINTEXT}
+    username: ${KAFKA_USERNAME:USERNAME}
+    password: ${KAFKA_PASSWORD:PASSWORD}
+    mechanism: ${KAFKA_SECURITY_MECHANISM:SCRAM-SHA-512}
