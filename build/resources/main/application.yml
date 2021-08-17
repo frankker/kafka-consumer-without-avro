@@ -18,7 +18,13 @@ management:
       enabled: true
 
 kafka:
-  broker1:
-    url: localhost:9092
+  brokers:
+    broker1:
+      url: localhost:9092
   consumerGroup: cgroup
   autoOffset: earliest
+  security:
+    protocol: SASL_PLAINTEXT
+    username: USERNAME
+    password: PASSWORD
+    mechanism: SCRAM-SHA-512

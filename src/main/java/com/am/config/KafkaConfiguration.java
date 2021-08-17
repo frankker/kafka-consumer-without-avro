@@ -1,9 +1,12 @@
 package com.am.config;
 
 import com.am.service.KafkaRecordListener;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -20,7 +23,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 @EnableKafka
 public class KafkaConfiguration {
 
-  @Value("${kafka.broker1.url}")
+  @Value("${kafka.brokers.broker1.url}")
   private String kafkaBroker;
 
   @Value("${kafka.consumerGroup}")
@@ -28,6 +31,18 @@ public class KafkaConfiguration {
 
   @Value("${kafka.autoOffset}")
   private String autoOffset;
+
+  @Value("${kafka.security.protocol}")
+  private String securityProtocol;
+
+  @Value("${kafka.security.mechanism}")
+  private String saslMechanism;
+
+  @Value("${kafka.security.username}")
+  private String kafkaUsername;
+
+  @Value("${kafka.security.password}")
+  private String kafkaPassword;
 
   @Bean
   ConcurrentKafkaListenerContainerFactory<Integer, String> kafkaListenerContainerFactory(
@@ -50,6 +65,11 @@ public class KafkaConfiguration {
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffset);
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    //Security config
+    final String saslJaasConfigString = MessageFormat.format("org.apache.kafka.common.security.scram.ScramLoginModule required username=\"{0}\" password=\"{1}\";", kafkaUsername, kafkaPassword);
+    props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+    props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
+    props.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfigString);
     return props;
   }
 
