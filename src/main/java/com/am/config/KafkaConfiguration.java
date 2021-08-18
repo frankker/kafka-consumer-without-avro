@@ -8,9 +8,7 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.serialization.LongDeserializer;
-import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -65,8 +63,11 @@ public class KafkaConfiguration {
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffset);
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-    //Security config
-    final String saslJaasConfigString = MessageFormat.format("org.apache.kafka.common.security.scram.ScramLoginModule required username=\"{0}\" password=\"{1}\";", kafkaUsername, kafkaPassword);
+    // Security config
+    final String saslJaasConfigString =
+        MessageFormat.format(
+            "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"{0}\" password=\"{1}\";",
+            kafkaUsername, kafkaPassword);
     props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
     props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
     props.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfigString);

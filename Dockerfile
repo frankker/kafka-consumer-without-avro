@@ -48,7 +48,7 @@ RUN apt-get update && \
     chmod 0500 /entrypoint.sh
 
 #COPY --chown=java:java "build/glowroot/glowroot.jar" "/home/java/glowroot.jar"
-COPY --chown=java:java "build/libs/KafkaConsumer-*.jar" "/home/java/app.jar"
+COPY --chown=java:java "build/libs/kafka-consumer*.jar" "/home/java/app.jar"
 
 RUN chmod 0500 /home/java/*.jar
 
