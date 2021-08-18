@@ -11,7 +11,8 @@ ENV MAIN_POSTGRES_USER=postgres \
     MAIN_POSTGRES_TIMEOUT=30 \
 #    PROFILE=Hilti,Batch\
     STRDEDUP=-XX:+UseStringDeduplication \
-    GC_LOG_LEVEL=-Xlog:gc*=error \
+    GC_LOG_LEVEL=-Xlog:gc*=error
+#    GC_LOG_LEVEL=-Xlog:gc*=error \
 #    ONTRACK3_MQ_HOST=activemq \
 #    ONTRACK3_MQ_HOST_FAILOVER=activemq \
 #    ONTRACK3_MQ_PORT=61616 \
