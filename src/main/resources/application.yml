@@ -20,7 +20,7 @@ management:
 kafka:
   brokers:
     broker1:
-      url: localhost:9092
+      url: ${KAFKA_BROKER1:localhost:9092}
   consumerGroup: cgroup
   autoOffset: earliest
   security:
