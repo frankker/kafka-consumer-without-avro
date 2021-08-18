@@ -17,10 +17,8 @@ management:
 kafka:
   brokers:
     urls: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    broker1:
-      url: ${KAFKA_BROKER1:localhost:9092}
-  consumerGroup: cgroup
-  autoOffset: earliest
+  consumerGroup: ${KAFKA_CONSUMER_GROUP_ID:MS001}
+  autoOffset: ${KAFKA_CONSUMER_OFFSET:earliest}
   security:
     protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_PLAINTEXT}
     username: ${KAFKA_USERNAME:USERNAME}
