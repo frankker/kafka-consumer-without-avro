@@ -23,7 +23,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 @EnableKafka
 public class KafkaConfiguration {
 
-  @Value("${kafka.brokers.broker1.url}")
+  @Value("${kafka.brokers.urls}")
   private String kafkaBroker;
 
   @Value("${kafka.consumerGroup}")

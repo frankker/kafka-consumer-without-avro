@@ -16,6 +16,7 @@ management:
 
 kafka:
   brokers:
+    urls: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     broker1:
       url: ${KAFKA_BROKER1:localhost:9092}
   consumerGroup: cgroup
