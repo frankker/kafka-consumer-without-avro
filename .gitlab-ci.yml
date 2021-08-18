@@ -134,12 +134,12 @@ encoding:
 # ----------------------------------------------------------------------
 jar:
   stage: build
-  script:
-    - ./gradlew -x asciidoc -x check assemble
-  artifacts:
-    paths:
-      - build/glowroot/glowroot.jar
-      - build/libs/
+#  script:
+#    - ./gradlew -x asciidoc -x check assemble
+#  artifacts:
+#    paths:
+#      - build/glowroot/glowroot.jar
+#      - build/libs/
 
 # ----------------------------------------------------------------------
 # validate
