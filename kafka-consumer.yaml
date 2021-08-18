@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kafka-consumer
+---
+apiVersion: ontrack.hilti.com/v2beta1
+kind: OntrackAPI
+metadata:
+  annotations:
+    ontrack.hilti.com/dbSizeOverride: db.t3.medium
+    ontrack.hilti.com/dockerconfigjson: kafka-consumer/regcred
+    ontrack.hilti.com/stage-secret: /kafka-consumer/aws,/kafka-consumer/config,/kafka-consumer
+    ontrack.hilti.com/api-path-prefix: /kafkaconsumer
+  name: kafka-consumer-master
+  namespace: kafka-consumer
+spec:
+  workloads:
+    - name: main
+      replicas: 2
+      containers:
+        - env:
+            - name: KAFKA_CONSUMER_GROUP_ID
+              value: "MS001"
+            - name: KAFKA_CONSUMER_OFFSET
+              value: "earliest"
+            - name: SERVER_COMPRESSION
+              value: "true"
+            - name: TOMCAT_MAX_THREAD
+              value: "400"
+            - name: TOMCAT_MAX_CONNECTIONS
+              value: "10000"
+            - name: TOMCAT_ACCEPT_COUNT
+              value: "100"
+            - name: JAVA_OPTS
+              value: "-XX:+UseG1GC -server -XX:NewRatio=3 -XX:InitialRAMPercentage=40 -XX:MaxRAMPercentage=80 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/data/java_$(POD_NAME).hprof -XX:MaxMetaspaceSize=512m"
+          image: registry.asmgmt.hilti.com/am/kafka-consumer-poc:latest
+          imagePullPolicy: Always
+          autoUpdate: True
+          livenessProbe:
+            initialDelaySeconds: 150
+            periodSeconds: 30
+            tcpSocket:
+              port: 8080
+          name: alert-notification-mgmt
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 150
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2G
+            requests:
+              cpu: 500m
+              memory: 1G
+          volumeMounts:
+            - mountPath: /data
+              name: kafka-consumer-efs-storage
+  dependencies:
+    resources:
+      - name: main
+        type: postgresql
+  network:
+    apiName: kafka-consumer
+    defaults:
+      routing:
+        targetWorkload: main
+      publishing:
+        authorization:
+          group: Impersonated
+          scopes:
+            - "TS.ONTrack.App.All"
+            - "TS.ONTrack.Web.All"
+        parameters:
+          - HC-Access-Token
+      # paths is needed is some api are supposed to go to specific workloads
+#    paths:
+#      - path: "/v1/alerts"
+#        routing:
+#          targetWorkload: main
+  type: Microservice
+  volumes:
+    - name: kafka-consumer-efs-storage
+      persistentVolumeClaim:
+        claimName: kafka-consumer-master
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: kafka-consumer-master
+  namespace: kafka-consumer
+spec:
+  storageClassName: aws-efs
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi

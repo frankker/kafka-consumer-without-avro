@@ -1,14 +1,17 @@
 package com.am.config;
 
 import com.am.service.KafkaRecordListener;
+import com.am.service.KafkaRecordProducer;
+import com.am.translator.ObjectTranslator;
 import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.config.SaslConfigs;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.LongDeserializer;
+import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +19,9 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.core.ProducerFactory;
 
 @Configuration
 @EnableKafka
@@ -43,16 +49,16 @@ public class KafkaConfiguration {
   private String kafkaPassword;
 
   @Bean
-  ConcurrentKafkaListenerContainerFactory<Integer, String> kafkaListenerContainerFactory(
-      ConsumerFactory<Integer, String> consumerFactory) {
-    ConcurrentKafkaListenerContainerFactory<Integer, String> factory =
+  ConcurrentKafkaListenerContainerFactory<Long, String> kafkaListenerContainerFactory(
+      ConsumerFactory<Long, String> consumerFactory) {
+    ConcurrentKafkaListenerContainerFactory<Long, String> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(consumerFactory);
     return factory;
   }
 
   @Bean
-  public ConsumerFactory<Integer, String> consumerFactory() {
+  public ConsumerFactory<Long, String> consumerFactory() {
     return new DefaultKafkaConsumerFactory<>(consumerProps());
   }
 
@@ -68,14 +74,42 @@ public class KafkaConfiguration {
         MessageFormat.format(
             "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"{0}\" password=\"{1}\";",
             kafkaUsername, kafkaPassword);
-    props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
-    props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
-    props.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfigString);
+    //    props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+    //    props.put(SaslConfigs.SASL_MECHANISM, saslMechanism);
+    //    props.put(SaslConfigs.SASL_JAAS_CONFIG, saslJaasConfigString);
     return props;
   }
 
   @Bean
   public KafkaRecordListener listener() {
     return new KafkaRecordListener();
+  }
+
+  // Producer
+
+  @Bean
+  public KafkaRecordProducer sender(
+      KafkaTemplate<Long, String> template, ObjectTranslator objectTranslator) {
+    return new KafkaRecordProducer(template, objectTranslator);
+  }
+
+  @Bean
+  public ProducerFactory<Long, String> producerFactory() {
+    return new DefaultKafkaProducerFactory<>(senderProps());
+  }
+
+  private Map<String, Object> senderProps() {
+    Map<String, Object> props = new HashMap<>();
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+    props.put(ProducerConfig.LINGER_MS_CONFIG, 10);
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, LongSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+    // ...
+    return props;
+  }
+
+  @Bean
+  public KafkaTemplate<Long, String> kafkaTemplate(ProducerFactory<Long, String> producerFactory) {
+    return new KafkaTemplate<Long, String>(producerFactory);
   }
 }
