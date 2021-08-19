@@ -7,11 +7,7 @@
 # Pipeline variables: https://docs.gitlab.com/ee/ci/variables/
 # ----------------------------------------------------------------------
 include:
-  - template: Code-Quality.gitlab-ci.yml
   - template: Container-Scanning.gitlab-ci.yml
-  - template: Dependency-Scanning.gitlab-ci.yml
-  - template: License-Scanning.gitlab-ci.yml
-  - template: SAST.gitlab-ci.yml
 
   - project: "am/gitlab-templates"
     ref: v2
@@ -24,7 +20,6 @@ image: adoptopenjdk:11-jdk-hotspot
 
 stages:
   - verify
-  - test
   - build
   - package
   - validate
@@ -35,7 +30,7 @@ stages:
 # global variables and cache
 # ----------------------------------------------------------------------
 variables:
-  MS_NAME: "alert-notification-mgmt"
+  MS_NAME: "am-kafka-consumer"
   NAMESPACE: "ontrack-priv"
   GRADLE_OPTS: "-Dorg.gradle.daemon=false -Djava.awt.headless=true"
   GRADLE_USER_HOME: ${CI_PROJECT_DIR}/.gradle
@@ -50,7 +45,7 @@ variables:
 cache: &cache_template
   key:
     files:
-      - gradle.lockfile
+#      - gradle.lockfile
       - gradle/wrapper/gradle-wrapper.properties
     prefix: gradle
   policy: pull
@@ -61,73 +56,73 @@ cache: &cache_template
 # ----------------------------------------------------------------------
 # static code quality checks
 # ----------------------------------------------------------------------
-#liquibase:
-#  stage: verify
-#  image:
-#    name: alpine/git:latest
-#    entrypoint: [""]
-#  cache: {}
-#  variables:
-#    GIT_DEPTH: 0
-#  script:
-#    - git diff --ignore-submodules --color --name-status --diff-filter=M origin/master src/main/resources/db/changelog/liquibase | tee liquibase_modifications.txt
-#    - echo -e "$(cat liquibase_modifications.txt)"
-#  rules:
-#    - if: $CI_MERGE_REQUEST_ID
-#      when: never
-#    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
-#      exists:
-#        - src/main/resources/db/**/*.xml
-
-encoding:
-  image: alpine:3
+liquibase:
   stage: verify
+  image:
+    name: alpine/git:latest
+    entrypoint: [""]
   cache: {}
-  script: |
-    apk --no-cache --quiet add file
-    find src -type f -name "*.properties" -print0 | sort | xargs -I{} file "{}" > files.txt
-    sed -E 's%^(src/.+?:.*(CRLF).*)$%\\033[0;31m❌ \1\\033[0m%' files.txt |
-    sed -E 's%^(src/.+?:.*(ASCII|UTF-8|empty|short).*)$%✅ \1%' |
-    sed -E 's%^(src/.+?:.*)$%\\033[0;31m❌ \1\\033[0m%' > output.txt
-    echo -e "$(cat output.txt)"
-    if grep -q '❌' output.txt; then
-      exit 1
-    fi
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - git diff --ignore-submodules --color --name-status --diff-filter=M origin/master src/main/resources/db/changelog/liquibase | tee liquibase_modifications.txt
+    - echo -e "$(cat liquibase_modifications.txt)"
   rules:
     - if: $CI_MERGE_REQUEST_ID
       when: never
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
       exists:
-        - src/**/*.properties
+        - src/main/resources/db/**/*.xml
+
+# encoding:
+#   image: alpine:3
+#   stage: verify
+#   cache: {}
+#   script: |
+#     apk --no-cache --quiet add file
+#     find src -type f -name "*.properties" -print0 | sort | xargs -I{} file "{}" > files.txt
+#     sed -E 's%^(src/.+?:.*(CRLF).*)$%\\033[0;31m❌ \1\\033[0m%' files.txt |
+#     sed -E 's%^(src/.+?:.*(ASCII|UTF-8|empty|short).*)$%✅ \1%' |
+#     sed -E 's%^(src/.+?:.*)$%\\033[0;31m❌ \1\\033[0m%' > output.txt
+#     echo -e "$(cat output.txt)"
+#     if grep -q '❌' output.txt; then
+#       exit 1
+#     fi
+#   rules:
+#     - if: $CI_MERGE_REQUEST_ID
+#       when: never
+#     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+#       exists:
+#         - src/**/*.properties
 
 # ----------------------------------------------------------------------
 # unit test
 # ----------------------------------------------------------------------
-#unit:
-#  stage: test
-#  variables:
-#    JAVA_OPTS: "-XX:MaxRAMPercentage=80.0"
-#  dependencies: []
-#  before_script:
-#    - apt-get update -qq
-#    - apt-get install --no-install-recommends -qq -y graphviz > /dev/null
-#  script:
-#    - ./gradlew check test asciidoc openapi3 postman
-#  after_script:
-#    - grep -oP "Total.*?([0-9]{1,3})%" build/reports/jacoco/test/html/index.html
-#  coverage: "/Total.*?([0-9]{1,3})%/"
-#  artifacts:
-#    when: always
-#    paths:
-#      - build/api-spec/
-#      - build/asciidoc/html5
-#      - build/reports/jacoco/test/html
-#      - build/reports/tests/test
-#    reports:
-#      junit: build/test-results/test/TEST-*.xml
-#  cache:
-#    <<: *cache_template
-#    policy: pull-push
+# unit:
+#   stage: test
+#   variables:
+#     JAVA_OPTS: "-XX:MaxRAMPercentage=80.0"
+#   dependencies: []
+#   before_script:
+#     - apt-get update -qq
+#     - apt-get install --no-install-recommends -qq -y graphviz > /dev/null
+#   script:
+#     - ./gradlew check test asciidoc openapi3 postman
+#   after_script:
+#     - grep -oP "Total.*?([0-9]{1,3})%" build/reports/jacoco/test/html/index.html
+#   coverage: "/Total.*?([0-9]{1,3})%/"
+#   artifacts:
+#     when: always
+#     paths:
+#       - build/api-spec/
+#       - build/asciidoc/html5
+#       - build/reports/jacoco/test/html
+#       - build/reports/tests/test
+#     reports:
+#       junit: build/test-results/test/TEST-*.xml
+#   cache:
+#     <<: *cache_template
+#     policy: pull-push
 
 # ----------------------------------------------------------------------
 # build
@@ -138,45 +133,45 @@ jar:
     - ./gradlew -x asciidoc -x check assemble
   artifacts:
     paths:
-      - build/glowroot/glowroot.jar
+      #   - build/glowroot/glowroot.jar
       - build/libs/
 
 # ----------------------------------------------------------------------
 # validate
 # ----------------------------------------------------------------------
-#dependency_scanning:
-#  stage: validate
-#  needs:
-#    - job: unit
-#      artifacts: false
+# dependency_scanning:
+#   stage: validate
+#   needs:
+#     - job: unit
+#       artifacts: false
 
 
-#code_quality:
-#  stage: validate
-#  cache: {}
-#  needs:
-#    - job: unit
-#      artifacts: false
+# code_quality:
+#   stage: validate
+#   cache: {}
+#   needs:
+#     - job: unit
+#       artifacts: false
 
 
-#sast:
-#  stage: validate
-#  variables:
-#    JAVA_OPTS: "-XX:MaxRAMPercentage=80.0"
-#    GRADLE_PATH: $CI_PROJECT_PATH/gradlew
-#    SAST_JAVA_VERSION: 11
-#  needs:
-#    - job: unit
-#      artifacts: true
+# sast:
+#   stage: validate
+#   variables:
+#     JAVA_OPTS: "-XX:MaxRAMPercentage=80.0"
+#     GRADLE_PATH: $CI_PROJECT_PATH/gradlew
+#     SAST_JAVA_VERSION: 11
+#   needs:
+#     - job: unit
+#       artifacts: true
 
-#license_scanning:
-#  stage: validate
-#  needs:
-#    - job: unit
-#      artifacts: false
-#  variables:
-#    ASDF_JAVA_VERSION: 11
-#    LM_JAVA_VERSION: 11
+# license_scanning:
+#   stage: validate
+#   needs:
+#     - job: unit
+#       artifacts: false
+#   variables:
+#     ASDF_JAVA_VERSION: 11
+#     LM_JAVA_VERSION: 11
 
 container_scanning:
   stage: validate
@@ -189,471 +184,469 @@ container_scanning:
     CI_APPLICATION_TAG: untested-${CI_COMMIT_SHA}
 
 
-#quality_gate:
-#  stage: validate
-#  variables:
-#    GIT_DEPTH: 0
-#  needs:
-#    - unit
-#  dependencies:
-#    - unit
-#  before_script:
-#    - ./gradlew --version
-#  script:
-#    - ./gradlew sonarqube
-#      --no-daemon
-#      -Dsonar.analysis.mode=${SONAR_ANALYSIS_MODE}
-#      -Dsonar.branch.name="${SONAR_BRANCH_NAME}"
-#      -Dsonar.gitlab.commit_sha=${CI_COMMIT_SHA}
-#      -Dsonar.gitlab.failure_notification_mode=${SONAR_GITLAB_NOTIFICATION_MODE}
-#      -Dsonar.gitlab.project_id=${CI_PROJECT_ID}
-#      -Dsonar.gitlab.ref_name="${CI_COMMIT_REF_NAME}"
-#      -Dsonar.host.url=${SONAR_URL}
-#      -Dsonar.login=${SONAR_LOGIN}
-#      -Dsonar.projectKey=gitlab-${CI_PROJECT_ID}
-#      -Dsonar.projectName="${CI_PROJECT_PATH}"
-#      -Dsonar.gitlab.user_token=${SONAR_GITLAB_TOKEN}
-#      -Dsonar.exclusions=**/com/ict/alert_notification_management/jooq/**/*,**/com/ict/alert_notification_management/migration/**/*,src/main/resources/db/**/*
-#  rules:
-#    - if: $SONAR_DISABLED
-#      when: never
-#    - if: $CI_COMMIT_BRANCH || $CI_COMMIT_TAG
+# quality_gate:
+#   stage: validate
+#   variables:
+#     GIT_DEPTH: 0
+#   needs:
+#     - unit
+#   dependencies:
+#     - unit
+#   before_script:
+#     - ./gradlew --version
+#   script:
+#     - ./gradlew sonarqube
+#       --no-daemon
+#       -Dsonar.analysis.mode=${SONAR_ANALYSIS_MODE}
+#       -Dsonar.branch.name="${SONAR_BRANCH_NAME}"
+#       -Dsonar.gitlab.commit_sha=${CI_COMMIT_SHA}
+#       -Dsonar.gitlab.failure_notification_mode=${SONAR_GITLAB_NOTIFICATION_MODE}
+#       -Dsonar.gitlab.project_id=${CI_PROJECT_ID}
+#       -Dsonar.gitlab.ref_name="${CI_COMMIT_REF_NAME}"
+#       -Dsonar.host.url=${SONAR_URL}
+#       -Dsonar.login=${SONAR_LOGIN}
+#       -Dsonar.projectKey=gitlab-${CI_PROJECT_ID}
+#       -Dsonar.projectName="${CI_PROJECT_PATH}"
+#       -Dsonar.gitlab.user_token=${SONAR_GITLAB_TOKEN}
+#       -Dsonar.exclusions=**/com/ict/alert_notification_management/jooq/**/*,**/com/ict/alert_notification_management/migration/**/*,src/main/resources/db/**/*
+#   rules:
+#     - if: $SONAR_DISABLED
+#       when: never
+#     - if: $CI_COMMIT_BRANCH || $CI_COMMIT_TAG
 
-#.regression_template: &regression_template
-#  stage: validate
-#  tags:
-#    - dind
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#    POSTGRES_USER: regression
-#    POSTGRES_PASSWORD: regression
-#    POSTGRES_DB: regression
-#    POSTGRES_ANALYTICS_DB: regression
-#    PROFILE: Hilti,Batch
-#    ALLOW_EMPTY_PASSWORD: "yes"
-#  dependencies: []
-#  services:
-#    - docker:stable-dind
-#    - webcenter/activemq
-#    - redis:5-alpine
-#
-#    - name: postgres:12-alpine
-#      alias: alert_notification_mgmt_db
-#
-#    - name: mockserver/mockserver:mockserver-5.9.0
-#      alias: mockserver
-#
-#  before_script:
-#    - apt-get update -qq
-#    - apt-get install -qq -y netcat curl docker.io > /dev/null
-#    - export DOCKER_HOST=${DOCKER_PORT_2375_TCP}
-#    - export SERVICE_HOST=${DOCKER_PORT_2375_TCP_ADDR}
-#    - export SERVICE_PORT_AM=$(shuf -n 1 -i 49152-65535)
-#    - docker login -u "$CI_REGISTRY_USER" -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
-#    - docker run ${DETACH}
-#      --name alert-notification-mgmt
-#      --publish ${SERVICE_PORT_AM}:8080
-#      --env MAIN_POSTGRES_HOST=${ALERT_NOTIFICATION_MGMT_DB_PORT_5432_TCP_ADDR}
-#      --env MAIN_POSTGRES_USER=${POSTGRES_USER}
-#      --env MAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-#      --env MAIN_POSTGRES_DB=${POSTGRES_DB}
-#      --env CACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
-#      --env CACHE_REDIS_PORT="6379"
-#      --env CACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
-#      --env CACHE_TYPE=redis
-#      --env USER_CACHE_REDIS_TTL_SECONDS=604800
-#      --env TENANT_CACHE_REDIS_TTL_SECONDS=604800
-#      --env USER_PERMISSION_CACHE_REDIS_TTL_SECONDS=604800
-#      --env PROFILE=${PROFILE}
-#      --env FCM_IOS_FILE_PATH=${FCM_IOS_FILE_PATH}
-#      --env FCM_ANDROID_FILE_PATH=${FCM_ANDROID_FILE_PATH}
-#      --env PUSH_NOTIFICATION_SWITCH=false
-#      --env DEVICE_UUID_ENCRYPTION_KEY=${DEVICE_UUID_ENCRYPTION_KEY}
-#      --env ONTRACK3_MQ_SCHEME=amqp
-#      --env ONTRACK3_MQ_HOST=${WEBCENTER__ACTIVEMQ_PORT_5672_TCP_ADDR}
-#      --env ONTRACK3_MQ_HOST_FAILOVER=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_ADDR}
-#      --env ONTRACK3_MQ_PORT=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_PORT}
-#      --env ONTRACK3_MQ_USER=admin
-#      --env ONTRACK3_MQ_PASSWORD=admin
-#      --env USER_MGMT_SVC=http://${MOCKSERVER_PORT_1080_TCP_ADDR}:${MOCKSERVER_PORT_1080_TCP_PORT}
-#      --env USER_MGMT_SVC=http://${MOCKSERVER_PORT_1080_TCP_ADDR}:${MOCKSERVER_PORT_1080_TCP_PORT}
-#      --env USER_CONTEXT_URI=/v1/users/my-context
-#      --env USER_CACHE_TIMEOUT=60
-#      --env USER_CACHE_SIZE=1000
-#      --env USER_CONTEXT_HEADER=HC-Access-Token
-#      --env SEARCH_API_BASI_URI=http://${SERVICE_HOST}:${SERVICE_PORT_SRCH}
-#      --env NOTIFICATION_POLLER_CRON='0 */10 * ? * *'
-#      --env FCM_SILENT_NOTIFICATION_CRON='0 0/9 * * * ?'
-#      --env ASSET_SERVICE_UPDATE_CRON='0 0/10 * * * ?'
-#      --env SNOOZED_POLLER_CRON='0 0 * ? * *'
-#      --env CATALOGUE_DOC_MGMT_SVC=localhost:8084
-#      --env SCHEDULER_POLLER_CRON='0 */10 * ? * *'
-#      --env DISMISS_BATCH_SIZE="1000"
-#      --env DISMISS_CRON="0 0 3 * * ?"
-#      --env ALERT_MIGRATION_POLLER="0 0 * * * ?"
-#      --env ROOT_LOG_LEVEL=INFO
-#      --env ACCESS_KEY=DEFAULT_ACCESS_KEY
-#      --env APPLICATION_LOG_LEVEL=INFO
-#      --env SEARCH_LABELS_SVC=localhost:8087
-#      --env REFRESH_CONSOLIDATED_DATA_CRON="0 0 23 ? * *"
-#      --env GLOWROOT_AGENT_ID=${GLOWROOT_AGENT_ID}
-#      --env GLOWROOT_ROLLUP_ID=${GLOWROOT_ROLLUP_ID}
-#      --env GLOWROOT_COLLECTOR_ADDRESS=${GLOWROOT_COLLECTOR_ADDRESS}
-#      --env SEARCH_INTERNAL=true
-#      ${CI_REGISTRY_IMAGE}/${CI_COMMIT_REF_SLUG}:untested-${CI_COMMIT_SHA}
-#    - retries=0
-#    - while ! (nc -w 3 -z ${SERVICE_HOST} ${SERVICE_PORT_AM} ) ; do sleep 2 ; echo -n "." ; if [ $retries -eq 60 ] ; then echo " Timeout, aborting." ; exit 1 ; fi ; retries=$(($retries+1)) ; done
-#  script:
-#    - ./gradlew clean Automation aggregate -Pcucumber.options="--tags @Profile=Common,@Profile=${PROFILE}" -Phost="${SERVICE_HOST}" -Pport="${SERVICE_PORT}" -PMAIN_POSTGRES_HOST="${POSTGRES_PORT_5432_TCP_ADDR}" -PMAIN_POSTGRES_PORT="5432" -PMAIN_POSTGRES_DB="${POSTGRES_DB}" -PMAIN_POSTGRES_USER="${POSTGRES_USER}" -PMAIN_POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" -PCACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR} -PCACHE_REDIS_PORT="6379" -PCACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD} -PCACHE_TYPE=redis -PUSER_CACHE_REDIS_TTL_SECONDS="604800" -PTENANT_CACHE_REDIS_TTL_SECONDS="604800" -PUSER_PERMISSION_CACHE_REDIS_TTL_SECONDS="604800"
-#  after_script:
-##    - mv target/site/serenity target/site/serenity-${CI_JOB_NAME}
-#    - export DOCKER_HOST=${DOCKER_PORT_2375_TCP}
-#    - docker logs alert-notification-mgmt
-#    - docker stop alert-notification-mgmt || true
-#  artifacts:
-#    when: always
-#    paths:
-#      - target/site/serenity-${CI_JOB_NAME}
+# .regression_template: &regression_template
+#   stage: validate
+#   tags:
+#     - dind
+#   variables:
+#     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#     POSTGRES_USER: regression
+#     POSTGRES_PASSWORD: regression
+#     POSTGRES_DB: regression
+#     POSTGRES_ANALYTICS_DB: regression
+#     PROFILE: Hilti,Batch
+#     ALLOW_EMPTY_PASSWORD: "yes"
+#   dependencies: []
+#   services:
+#     - docker:stable-dind
+#     - webcenter/activemq
+#     - redis:5-alpine
 
-#automation_new:
-#  stage: validate
-#  tags:
-#    - dind
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#    POSTGRES_USER: regression
-#    POSTGRES_PASSWORD: regression
-#    POSTGRES_DB: regression
-#    POSTGRES_ANALYTICS_DB: regression
-#    PROFILE: Hilti,Batch
-#    ALLOW_EMPTY_PASSWORD: "yes"
-#  parallel: 10
-#  retry:
-#      max: 1
-#      when: always
-#  services:
-#    - docker:stable-dind
-#    - webcenter/activemq
-#    - redis:5-alpine
-#    - name: postgres:12-alpine
-#      alias: alert_notification_mgmt_db
-#  before_script:
-#    - apt-get update -qq
-#    - apt-get install -qq -y netcat curl docker.io > /dev/null
-#    - export DOCKER_HOST=${DOCKER_PORT_2375_TCP}
-#    - export SERVICE_HOST=${DOCKER_PORT_2375_TCP_ADDR}
-#    - export SERVICE_PORT_AM=$(shuf -n 1 -i 49152-65535)
-#    - docker login -u "$CI_REGISTRY_USER" -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
-#  script:
-#    - ./gradlew clean AutomationNew
-#      -Pcucumber.options="src/test/resources/behavior/Batch${CI_NODE_INDEX}"
-#      -Phost="${SERVICE_HOST}"
-#      -Pport="${SERVICE_PORT_AM}"
-#      -PMAIN_POSTGRES_HOST=${ALERT_NOTIFICATION_MGMT_DB_PORT_5432_TCP_ADDR}
-#      -PMAIN_POSTGRES_USER=${POSTGRES_USER}
-#      -PMAIN_POSTGRES_PORT="5432"
-#      -PMAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-#      -PMAIN_POSTGRES_DB=${POSTGRES_DB}
-#      -PCACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
-#      -PCACHE_REDIS_PORT="6379"
-#      -PCACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
-#      -PCACHE_TYPE=redis
-#      -PUSER_CACHE_REDIS_TTL_SECONDS="604800"
-#      -PTENANT_CACHE_REDIS_TTL_SECONDS="604800"
-#      -PUSER_PERMISSION_CACHE_REDIS_TTL_SECONDS="604800"
-#      -PPROFILE=${PROFILE}
-#      -PONTRACK3_MQ_SCHEME=amqp
-#      -PONTRACK3_MQ_HOST=${WEBCENTER__ACTIVEMQ_PORT_5672_TCP_ADDR}
-#      -PONTRACK3_MQ_HOST_FAILOVER=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_ADDR}
-#      -PONTRACK3_MQ_PORT=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_PORT}
-#      -PONTRACK3_MQ_USER=admin
-#      -PONTRACK3_MQ_PASSWORD=admin
-#      -PUSER_MGMT_SVC=http://localhost:9080
-#      -PUSER_CONTEXT_URI=/v1/users/my-context
-#      -PUSER_CACHE_TIMEOUT=60
-#      -PUSER_CACHE_SIZE=1000
-#      -PUSER_CONTEXT_HEADER=HC-Access-Token
-#      -PSEARCH_API_BASI_URI=http://${SERVICE_HOST}:${SERVICE_PORT_SRCH}
-#      -PNOTIFICATION_POLLER_CRON='0 */10 * ? * *'
-#      -PFCM_SILENT_NOTIFICATION_CRON='0 0/9 * * * ?'
-#      -PASSET_SERVICE_UPDATE_CRON='0 0/10 * * * ?'
-#      -PSNOOZED_POLLER_CRON='0 0 * ? * *'
-#      -PCATALOGUE_DOC_MGMT_SVC=localhost:8084
-#      -PSCHEDULER_POLLER_CRON='0 */10 * ? * *'
-#      -PROOT_LOG_LEVEL=INFO
-#      -PACCESS_KEY=DEFAULT_ACCESS_KEY
-#      -PAPPLICATION_LOG_LEVEL=INFO
-#      -PMOCK_SERVER_HOST="${MOCKSERVER_PORT_1080_TCP_ADDR}"
-#      -PMOCK_SERVER_PORT="${MOCKSERVER_PORT_1080_TCP_PORT}"
-#      -PSEARCH_LABELS_SVC=localhost:8084
-#      -PDISMISS_BATCH_SIZE="1000"
-#      -PDISMISS_CRON="0 0 3 * * ?"
-#      -PALERT_MIGRATION_POLLER="0 0 * * * ?"
-#      -PREFRESH_CONSOLIDATED_DATA_CRON="0 0 23 ? * *"
-#      -PDBVersion=4
-#      -PFCM_IOS_FILE_PATH=${FCM_IOS_FILE_PATH}
-#      -PFCM_ANDROID_FILE_PATH=${FCM_ANDROID_FILE_PATH}
-#      -PPUSH_NOTIFICATION_SWITCH=false
-#      -PDEVICE_UUID_ENCRYPTION_KEY=${DEVICE_UUID_ENCRYPTION_KEY}
-#      -PSEARCH_INTERNAL=true
-#  after_script:
-#    - mv test-output/cucumber-html-reports test-output/cucumber-html-reports-${CI_NODE_INDEX}
-#
-#  artifacts:
-#    when: always
-#    paths:
-#      - test-output/cucumber-html-reports-${CI_NODE_INDEX}
-#      - builds/am
+#     - name: postgres:12-alpine
+#       alias: alert_notification_mgmt_db
 
-#.service_hilti:
-#  <<: *regression_template
-#  variables:
-#    PROFILE: Hilti,Batch
-#    POSTGRES_USER: regression
-#    POSTGRES_PASSWORD: regression
-#    POSTGRES_DB: regression
-#    ALLOW_EMPTY_PASSWORD: "yes"
-#  script:
-#    - ./gradlew clean Automation aggregate
-#      -Pcucumber.options="--tags '@Suite=NewService1'"
-#      -Phost="${SERVICE_HOST}"
-#      -Pport="${SERVICE_PORT_AM}"
-#      -PONTRACK3_MQ_SCHEME="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_PROTO}"
-#      -PONTRACK3_MQ_HOST="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_ADDR}"
-#      -PONTRACK3_MQ_PORT="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_PORT}"
-#      -PONTRACK3_MQ_USER=admin -PMQ_PASSWORD=admin
-#      -PMAIN_POSTGRES_HOST="${POSTGRES_PORT_5432_TCP_ADDR}"
-#      -PMAIN_POSTGRES_PORT="5432"
-#      -PMAIN_POSTGRES_DB="${POSTGRES_DB}"
-#      -PMAIN_POSTGRES_USER="${POSTGRES_USER}"
-#      -PMAIN_POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
-#      -PMAIN_POSTGRES_USERMGMT_HOST="${USER_MGMT_DB_PORT_5432_TCP_ADDR}"
-#      -PMAIN_POSTGRES_USRMGMT_DB="${POSTGRES_DB}"
-#      -PCACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
-#      -PCACHE_REDIS_PORT="6379"
-#      -PCACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
-#      -PCACHE_TYPE=redis
-#      -PUSER_CACHE_REDIS_TTL_SECONDS="604800"
-#      -PTENANT_CACHE_REDIS_TTL_SECONDS="604800"
-#      -PUSER_PERMISSION_CACHE_REDIS_TTL_SECONDS="604800"
-#      -PMOCK_SERVER_HOST="${MOCKSERVER_PORT_1080_TCP_ADDR}"
-#      -PMOCK_SERVER_PORT="${MOCKSERVER_PORT_1080_TCP_PORT}"
-#
-#spring_cloud_contract_test:
-#  <<: *regression_template
-#  variables:
-#    PROFILE: Hilti,Batch
-#    POSTGRES_USER: regression
-#    POSTGRES_PASSWORD: regression
-#    POSTGRES_DB: regression
-#    ALLOW_EMPTY_PASSWORD: "yes"
-#  script:
-#    - ./gradlew clean contractTest aggregate
-#      -Pcucumber.options="--tags '@Suite=NewService1'"
-#      -Phost="${SERVICE_HOST}"
-#      -Pport="${SERVICE_PORT_AM}"
-#      -PMAIN_POSTGRES_HOST=${ALERT_NOTIFICATION_MGMT_DB_PORT_5432_TCP_ADDR}
-#      -PMAIN_POSTGRES_USER=${POSTGRES_USER}
-#      -PMAIN_POSTGRES_PORT="5432"
-#      -PMAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-#      -PMAIN_POSTGRES_DB=${POSTGRES_DB}
-#      -PCACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
-#      -PCACHE_REDIS_PORT="6379"
-#      -PCACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
-#      -PCACHE_TYPE=redis
-#      -PUSER_CACHE_REDIS_TTL_SECONDS="604800"
-#      -PTENANT_CACHE_REDIS_TTL_SECONDS="604800"
-#      -PUSER_PERMISSION_CACHE_REDIS_TTL_SECONDS="604800"
-#      -PPROFILE=${PROFILE}
-#      -PONTRACK3_MQ_SCHEME=amqp
-#      -PONTRACK3_MQ_HOST=${WEBCENTER__ACTIVEMQ_PORT_5672_TCP_ADDR}
-#      -PONTRACK3_MQ_HOST_FAILOVER=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_ADDR}
-#      -PONTRACK3_MQ_PORT=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_PORT}
-#      -PONTRACK3_MQ_USER=admin
-#      -PONTRACK3_MQ_PASSWORD=admin
-#      -PUSER_MGMT_SVC=http://localhost:9080
-#      -PUSER_CONTEXT_URI=/v1/users/my-context
-#      -PUSER_CACHE_TIMEOUT=60
-#      -PUSER_CACHE_SIZE=1000
-#      -PUSER_CONTEXT_HEADER=HC-Access-Token
-#      -PSEARCH_API_BASI_URI=http://${SERVICE_HOST}:${SERVICE_PORT_SRCH}
-#      -PNOTIFICATION_POLLER_CRON='0 */10 * ? * *'
-#      -PFCM_SILENT_NOTIFICATION_CRON='0 0/9 * * * ?'
-#      -PASSET_SERVICE_UPDATE_CRON='0 0/10 * * * ?'
-#      -PSNOOZED_POLLER_CRON='0 0 * ? * *'
-#      -PCATALOGUE_DOC_MGMT_SVC=localhost:8084
-#      -PSCHEDULER_POLLER_CRON='0 */10 * ? * *'
-#      -PROOT_LOG_LEVEL=INFO
-#      -PACCESS_KEY=DEFAULT_ACCESS_KEY
-#      -PAPPLICATION_LOG_LEVEL=INFO
-#      -PMOCK_SERVER_HOST="${MOCKSERVER_PORT_1080_TCP_ADDR}"
-#      -PMOCK_SERVER_PORT="${MOCKSERVER_PORT_1080_TCP_PORT}"
-#      -PSEARCH_LABELS_SVC=localhost:8084
-#      -PDISMISS_BATCH_SIZE="1000"
-#      -PDISMISS_CRON="0 0 3 * * ?"
-#      -PALERT_MIGRATION_POLLER="0 0 * * * ?"
-#      -PREFRESH_CONSOLIDATED_DATA_CRON="0 0 23 ? * *"
-#      -PFCM_IOS_FILE_PATH=${FCM_IOS_FILE_PATH}
-#      -PFCM_ANDROID_FILE_PATH=${FCM_ANDROID_FILE_PATH}
-#      -PPUSH_NOTIFICATION_SWITCH=false
-#      -PDEVICE_UUID_ENCRYPTION_KEY=${DEVICE_UUID_ENCRYPTION_KEY}
+#     - name: mockserver/mockserver:mockserver-5.9.0
+#       alias: mockserver
 
-#  after_script:
-#    - mv target/site/serenity target/site/serenity-${CI_JOB_NAME}
-#  artifacts:
-#    when: always
-#    paths:
-#      - build/reports/tests/ContractTest
-#
-#.contract_hilti:
-#  <<: *regression_template
-#  variables:
-#    PROFILE: Hilti,Batch
-#    POSTGRES_USER: regression
-#    POSTGRES_PASSWORD: regression
-#    POSTGRES_DB: regression
-#    ALLOW_EMPTY_PASSWORD: "yes"
-#  script: --env MAIN_POSTGRES_USER=${POSTGRES_USER}
-#    --env MAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-#    --env MAIN_POSTGRES_DB=${POSTGRES_DB}
-#    --env MAIN_POSTGRES_HOST=${POSTGRES_PORT_5432_TCP_ADDR}
-#    --env CACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
-#    --env CACHE_REDIS_PORT="6379"
-#    --env CACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
-#    --env CACHE_TYPE=redis
-#    --env USER_CACHE_REDIS_TTL_SECONDS=604800
-#    --env TENANT_CACHE_REDIS_TTL_SECONDS=604800
-#    --env USER_PERMISSION_CACHE_REDIS_TTL_SECONDS=604800
-#    - ./gradlew clean Automation -Pcucumber.options="--tags '@Profile=Common and @Suite=NewContract or @Profile="${PROFILE}" and @Suite=Contract'" aggregate -Phost="${SERVICE_HOST}" -Pport="${SERVICE_PORT_AM}" -PONTRACK3_MQ_SCHEME="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_PROTO}" -PONTRACK3_MQ_HOST="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_ADDR}" -PONTRACK3_MQ_PORT="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_PORT}" -PONTRACK3_MQ_USER=admin -PONTRACK3_MQ_PASSWORD=admin -PMAIN_POSTGRES_HOST="${POSTGRES_PORT_5432_TCP_ADDR}" -PMAIN_POSTGRES_PORT="5432" -PMAIN_POSTGRES_DB="${POSTGRES_DB}" -PMAIN_POSTGRES_USER="${POSTGRES_USER}" -PMAIN_POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" -PMAIN_POSTGRES_USERMGMT_HOST="${USER_MGMT_DB_PORT_5432_TCP_ADDR}" -PMAIN_POSTGRES_USRMGMT_DB="${POSTGRES_DB}"
-#  only:
-#    - branches
-#  except:
-#    - master
-#    - tags
-#
-#schemacrawler:
-#  <<: *regression_template
-#  script:
-#    - docker run --name schemacrawler
-#      --env MAIN_POSTGRES_USER=${POSTGRES_USER}
-#      --env MAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-#      --env MAIN_POSTGRES_DB=${POSTGRES_DB}
-#      --env MAIN_POSTGRES_HOST=${POSTGRES_PORT_5432_TCP_ADDR}
-#      --env CACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
-#      --env CACHE_REDIS_PORT="6379"
-#      --env CACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
-#      --env CACHE_TYPE=redis
-#      --env USER_CACHE_REDIS_TTL_SECONDS=604800
-#      --env TENANT_CACHE_REDIS_TTL_SECONDS=604800
-#      --env USER_PERMISSION_CACHE_REDIS_TTL_SECONDS=604800
-#      --entrypoint=/opt/schemacrawler/schemacrawler.sh
-#      --volume "$PWD":/code
-#      schemacrawler/schemacrawler:v15.05.01
-#      -server=postgresql
-#      -host=${POSTGRES_PORT_5432_TCP_ADDR}
-#      -user=${POSTGRES_USER}
-#      -password=${POSTGRES_PASSWORD}
-#      -database=${POSTGRES_DB}
-#      -infolevel=standard
-#      -sortcolumns
-#      -command=schema
-#      -outputformat=htmlx
-#      -o /code/schema.html
-#  artifacts:
-#    paths:
-#      - schema.html
-#
-#download_openapi:
-#  <<: *regression_template
-#  variables:
-#    PROFILE: Hilti
-#    POSTGRES_USER: regression
-#    POSTGRES_PASSWORD: regression
-#    POSTGRES_DB: regression
-#    ALLOW_EMPTY_PASSWORD: "yes"
-#  cache: {}
-#  script:
-#    - |
-#      ret=$(curl --location --request GET "http://$SERVICE_HOST:$SERVICE_PORT_AM/v1/alert-notification.v1.openapi.yaml" \
-#        --header "HC-Access-Token: $TOKEN" \
-#        --verbose --write "%{http_code}" \
-#        --output alert-notification.v1.openapi.yaml || rc=$?)
-#    - |
-#      if [[ "$ret" -ne "200" ]]; then
-#        echo "could not log in to ONTrack!!!"; exit 1;
-#      fi
-#  after_script:
-#    - export DOCKER_HOST=${DOCKER_PORT_2375_TCP}
-#    - docker stop alert-notification-mgmt || true
-#  rules:
-#    - if: "$CI_COMMIT_TAG || $CI_COMMIT_BRANCH"
-#  artifacts:
-#    when: on_success
-#    paths:
-#      - alert-notification.v1.openapi.yaml
-#
-#docs:
-#  stage: release
-#  dependencies:
-#    - unit
-#    - automation_new
-#    - schemacrawler
-#  script:
-#    - mv build/asciidoc/html5 public
-#    - mv schema.html public/schema.html
-#    - mv build/api-spec/* public/
-#    - mv build/reports/jacoco/test/html public/unittests
-##    - mv target/site/serenity-service_hilti target/site/serenity
-##    - ./gradlew aggregate
-##    - mv target/site/serenity public/service_hilti
-#  artifacts:
-#    paths:
-#      - public
+#   before_script:
+#     - apt-get update -qq
+#     - apt-get install -qq -y netcat curl docker.io > /dev/null
+#     - export DOCKER_HOST=${DOCKER_PORT_2375_TCP}
+#     - export SERVICE_HOST=${DOCKER_PORT_2375_TCP_ADDR}
+#     - export SERVICE_PORT_AM=$(shuf -n 1 -i 49152-65535)
+#     - docker login -u "$CI_REGISTRY_USER" -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
+#     - docker run ${DETACH}
+#       --name alert-notification-mgmt
+#       --publish ${SERVICE_PORT_AM}:8080
+#       --env MAIN_POSTGRES_HOST=${ALERT_NOTIFICATION_MGMT_DB_PORT_5432_TCP_ADDR}
+#       --env MAIN_POSTGRES_USER=${POSTGRES_USER}
+#       --env MAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+#       --env MAIN_POSTGRES_DB=${POSTGRES_DB}
+#       --env CACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
+#       --env CACHE_REDIS_PORT="6379"
+#       --env CACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
+#       --env CACHE_TYPE=redis
+#       --env USER_CACHE_REDIS_TTL_SECONDS=604800
+#       --env TENANT_CACHE_REDIS_TTL_SECONDS=604800
+#       --env USER_PERMISSION_CACHE_REDIS_TTL_SECONDS=604800
+#       --env PROFILE=${PROFILE}
+#       --env FCM_IOS_FILE_PATH=${FCM_IOS_FILE_PATH}
+#       --env FCM_ANDROID_FILE_PATH=${FCM_ANDROID_FILE_PATH}
+#       --env PUSH_NOTIFICATION_SWITCH=false
+#       --env DEVICE_UUID_ENCRYPTION_KEY=${DEVICE_UUID_ENCRYPTION_KEY}
+#       --env ONTRACK3_MQ_SCHEME=amqp
+#       --env ONTRACK3_MQ_HOST=${WEBCENTER__ACTIVEMQ_PORT_5672_TCP_ADDR}
+#       --env ONTRACK3_MQ_HOST_FAILOVER=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_ADDR}
+#       --env ONTRACK3_MQ_PORT=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_PORT}
+#       --env ONTRACK3_MQ_USER=admin
+#       --env ONTRACK3_MQ_PASSWORD=admin
+#       --env USER_MGMT_SVC=http://${MOCKSERVER_PORT_1080_TCP_ADDR}:${MOCKSERVER_PORT_1080_TCP_PORT}
+#       --env USER_MGMT_SVC=http://${MOCKSERVER_PORT_1080_TCP_ADDR}:${MOCKSERVER_PORT_1080_TCP_PORT}
+#       --env USER_CONTEXT_URI=/v1/users/my-context
+#       --env USER_CACHE_TIMEOUT=60
+#       --env USER_CACHE_SIZE=1000
+#       --env USER_CONTEXT_HEADER=HC-Access-Token
+#       --env SEARCH_API_BASI_URI=http://${SERVICE_HOST}:${SERVICE_PORT_SRCH}
+#       --env NOTIFICATION_POLLER_CRON='0 */10 * ? * *'
+#       --env FCM_SILENT_NOTIFICATION_CRON='0 0/9 * * * ?'
+#       --env ASSET_SERVICE_UPDATE_CRON='0 0/10 * * * ?'
+#       --env SNOOZED_POLLER_CRON='0 0 * ? * *'
+#       --env CATALOGUE_DOC_MGMT_SVC=localhost:8084
+#       --env SCHEDULER_POLLER_CRON='0 */10 * ? * *'
+#       --env DISMISS_BATCH_SIZE="1000"
+#       --env DISMISS_CRON="0 0 3 * * ?"
+#       --env ALERT_MIGRATION_POLLER="0 0 * * * ?"
+#       --env ROOT_LOG_LEVEL=INFO
+#       --env ACCESS_KEY=DEFAULT_ACCESS_KEY
+#       --env APPLICATION_LOG_LEVEL=INFO
+#       --env SEARCH_LABELS_SVC=localhost:8087
+#       --env REFRESH_CONSOLIDATED_DATA_CRON="0 0 23 ? * *"
+#       --env GLOWROOT_AGENT_ID=${GLOWROOT_AGENT_ID}
+#       --env GLOWROOT_ROLLUP_ID=${GLOWROOT_ROLLUP_ID}
+#       --env GLOWROOT_COLLECTOR_ADDRESS=${GLOWROOT_COLLECTOR_ADDRESS}
+#       --env SEARCH_INTERNAL=true
+#       ${CI_REGISTRY_IMAGE}/${CI_COMMIT_REF_SLUG}:untested-${CI_COMMIT_SHA}
+#     - retries=0
+#     - while ! (nc -w 3 -z ${SERVICE_HOST} ${SERVICE_PORT_AM} ) ; do sleep 2 ; echo -n "." ; if [ $retries -eq 60 ] ; then echo " Timeout, aborting." ; exit 1 ; fi ; retries=$(($retries+1)) ; done
+#   script:
+#     - ./gradlew clean Automation aggregate -Pcucumber.options="--tags @Profile=Common,@Profile=${PROFILE}" -Phost="${SERVICE_HOST}" -Pport="${SERVICE_PORT}" -PMAIN_POSTGRES_HOST="${POSTGRES_PORT_5432_TCP_ADDR}" -PMAIN_POSTGRES_PORT="5432" -PMAIN_POSTGRES_DB="${POSTGRES_DB}" -PMAIN_POSTGRES_USER="${POSTGRES_USER}" -PMAIN_POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" -PCACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR} -PCACHE_REDIS_PORT="6379" -PCACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD} -PCACHE_TYPE=redis -PUSER_CACHE_REDIS_TTL_SECONDS="604800" -PTENANT_CACHE_REDIS_TTL_SECONDS="604800" -PUSER_PERMISSION_CACHE_REDIS_TTL_SECONDS="604800"
+#   after_script:
+# #    - mv target/site/serenity target/site/serenity-${CI_JOB_NAME}
+#     - export DOCKER_HOST=${DOCKER_PORT_2375_TCP}
+#     - docker logs alert-notification-mgmt
+#     - docker stop alert-notification-mgmt || true
+#   artifacts:
+#     when: always
+#     paths:
+#       - target/site/serenity-${CI_JOB_NAME}
+
+# automation_new:
+#   stage: validate
+#   tags:
+#     - dind
+#   variables:
+#     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+#     POSTGRES_USER: regression
+#     POSTGRES_PASSWORD: regression
+#     POSTGRES_DB: regression
+#     POSTGRES_ANALYTICS_DB: regression
+#     PROFILE: Hilti,Batch
+#     ALLOW_EMPTY_PASSWORD: "yes"
+#   parallel: 10
+#   retry:
+#       max: 1
+#       when: always
+#   services:
+#     - docker:stable-dind
+#     - webcenter/activemq
+#     - redis:5-alpine
+#     - name: postgres:12-alpine
+#       alias: alert_notification_mgmt_db
+#   before_script:
+#     - apt-get update -qq
+#     - apt-get install -qq -y netcat curl docker.io > /dev/null
+#     - export DOCKER_HOST=${DOCKER_PORT_2375_TCP}
+#     - export SERVICE_HOST=${DOCKER_PORT_2375_TCP_ADDR}
+#     - export SERVICE_PORT_AM=$(shuf -n 1 -i 49152-65535)
+#     - docker login -u "$CI_REGISTRY_USER" -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
+#   script:
+#     - ./gradlew clean AutomationNew
+#       -Pcucumber.options="src/test/resources/behavior/Batch${CI_NODE_INDEX}"
+#       -Phost="${SERVICE_HOST}"
+#       -Pport="${SERVICE_PORT_AM}"
+#       -PMAIN_POSTGRES_HOST=${ALERT_NOTIFICATION_MGMT_DB_PORT_5432_TCP_ADDR}
+#       -PMAIN_POSTGRES_USER=${POSTGRES_USER}
+#       -PMAIN_POSTGRES_PORT="5432"
+#       -PMAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+#       -PMAIN_POSTGRES_DB=${POSTGRES_DB}
+#       -PCACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
+#       -PCACHE_REDIS_PORT="6379"
+#       -PCACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
+#       -PCACHE_TYPE=redis
+#       -PUSER_CACHE_REDIS_TTL_SECONDS="604800"
+#       -PTENANT_CACHE_REDIS_TTL_SECONDS="604800"
+#       -PUSER_PERMISSION_CACHE_REDIS_TTL_SECONDS="604800"
+#       -PPROFILE=${PROFILE}
+#       -PONTRACK3_MQ_SCHEME=amqp
+#       -PONTRACK3_MQ_HOST=${WEBCENTER__ACTIVEMQ_PORT_5672_TCP_ADDR}
+#       -PONTRACK3_MQ_HOST_FAILOVER=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_ADDR}
+#       -PONTRACK3_MQ_PORT=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_PORT}
+#       -PONTRACK3_MQ_USER=admin
+#       -PONTRACK3_MQ_PASSWORD=admin
+#       -PUSER_MGMT_SVC=http://localhost:9080
+#       -PUSER_CONTEXT_URI=/v1/users/my-context
+#       -PUSER_CACHE_TIMEOUT=60
+#       -PUSER_CACHE_SIZE=1000
+#       -PUSER_CONTEXT_HEADER=HC-Access-Token
+#       -PSEARCH_API_BASI_URI=http://${SERVICE_HOST}:${SERVICE_PORT_SRCH}
+#       -PNOTIFICATION_POLLER_CRON='0 */10 * ? * *'
+#       -PFCM_SILENT_NOTIFICATION_CRON='0 0/9 * * * ?'
+#       -PASSET_SERVICE_UPDATE_CRON='0 0/10 * * * ?'
+#       -PSNOOZED_POLLER_CRON='0 0 * ? * *'
+#       -PCATALOGUE_DOC_MGMT_SVC=localhost:8084
+#       -PSCHEDULER_POLLER_CRON='0 */10 * ? * *'
+#       -PROOT_LOG_LEVEL=INFO
+#       -PACCESS_KEY=DEFAULT_ACCESS_KEY
+#       -PAPPLICATION_LOG_LEVEL=INFO
+#       -PMOCK_SERVER_HOST="${MOCKSERVER_PORT_1080_TCP_ADDR}"
+#       -PMOCK_SERVER_PORT="${MOCKSERVER_PORT_1080_TCP_PORT}"
+#       -PSEARCH_LABELS_SVC=localhost:8084
+#       -PDISMISS_BATCH_SIZE="1000"
+#       -PDISMISS_CRON="0 0 3 * * ?"
+#       -PALERT_MIGRATION_POLLER="0 0 * * * ?"
+#       -PREFRESH_CONSOLIDATED_DATA_CRON="0 0 23 ? * *"
+#       -PDBVersion=4
+#       -PFCM_IOS_FILE_PATH=${FCM_IOS_FILE_PATH}
+#       -PFCM_ANDROID_FILE_PATH=${FCM_ANDROID_FILE_PATH}
+#       -PPUSH_NOTIFICATION_SWITCH=false
+#       -PDEVICE_UUID_ENCRYPTION_KEY=${DEVICE_UUID_ENCRYPTION_KEY}
+#       -PSEARCH_INTERNAL=true
+#   after_script:
+#     - mv test-output/cucumber-html-reports test-output/cucumber-html-reports-${CI_NODE_INDEX}
+
+#   artifacts:
+#     when: always
+#     paths:
+#       - test-output/cucumber-html-reports-${CI_NODE_INDEX}
+# #      - builds/am
+
+# .service_hilti:
+#   <<: *regression_template
+#   variables:
+#     PROFILE: Hilti,Batch
+#     POSTGRES_USER: regression
+#     POSTGRES_PASSWORD: regression
+#     POSTGRES_DB: regression
+#     ALLOW_EMPTY_PASSWORD: "yes"
+#   script:
+#     - ./gradlew clean Automation aggregate
+#       -Pcucumber.options="--tags '@Suite=NewService1'"
+#       -Phost="${SERVICE_HOST}"
+#       -Pport="${SERVICE_PORT_AM}"
+#       -PONTRACK3_MQ_SCHEME="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_PROTO}"
+#       -PONTRACK3_MQ_HOST="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_ADDR}"
+#       -PONTRACK3_MQ_PORT="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_PORT}"
+#       -PONTRACK3_MQ_USER=admin -PMQ_PASSWORD=admin
+#       -PMAIN_POSTGRES_HOST="${POSTGRES_PORT_5432_TCP_ADDR}"
+#       -PMAIN_POSTGRES_PORT="5432"
+#       -PMAIN_POSTGRES_DB="${POSTGRES_DB}"
+#       -PMAIN_POSTGRES_USER="${POSTGRES_USER}"
+#       -PMAIN_POSTGRES_PASSWORD="${POSTGRES_PASSWORD}"
+#       -PMAIN_POSTGRES_USERMGMT_HOST="${USER_MGMT_DB_PORT_5432_TCP_ADDR}"
+#       -PMAIN_POSTGRES_USRMGMT_DB="${POSTGRES_DB}"
+#       -PCACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
+#       -PCACHE_REDIS_PORT="6379"
+#       -PCACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
+#       -PCACHE_TYPE=redis
+#       -PUSER_CACHE_REDIS_TTL_SECONDS="604800"
+#       -PTENANT_CACHE_REDIS_TTL_SECONDS="604800"
+#       -PUSER_PERMISSION_CACHE_REDIS_TTL_SECONDS="604800"
+#       -PMOCK_SERVER_HOST="${MOCKSERVER_PORT_1080_TCP_ADDR}"
+#       -PMOCK_SERVER_PORT="${MOCKSERVER_PORT_1080_TCP_PORT}"
+
+# spring_cloud_contract_test:
+#   <<: *regression_template
+#   variables:
+#     PROFILE: Hilti,Batch
+#     POSTGRES_USER: regression
+#     POSTGRES_PASSWORD: regression
+#     POSTGRES_DB: regression
+#     ALLOW_EMPTY_PASSWORD: "yes"
+#   script:
+#     - ./gradlew clean contractTest aggregate
+#       -Pcucumber.options="--tags '@Suite=NewService1'"
+#       -Phost="${SERVICE_HOST}"
+#       -Pport="${SERVICE_PORT_AM}"
+#       -PMAIN_POSTGRES_HOST=${ALERT_NOTIFICATION_MGMT_DB_PORT_5432_TCP_ADDR}
+#       -PMAIN_POSTGRES_USER=${POSTGRES_USER}
+#       -PMAIN_POSTGRES_PORT="5432"
+#       -PMAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+#       -PMAIN_POSTGRES_DB=${POSTGRES_DB}
+#       -PCACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
+#       -PCACHE_REDIS_PORT="6379"
+#       -PCACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
+#       -PCACHE_TYPE=redis
+#       -PUSER_CACHE_REDIS_TTL_SECONDS="604800"
+#       -PTENANT_CACHE_REDIS_TTL_SECONDS="604800"
+#       -PUSER_PERMISSION_CACHE_REDIS_TTL_SECONDS="604800"
+#       -PPROFILE=${PROFILE}
+#       -PONTRACK3_MQ_SCHEME=amqp
+#       -PONTRACK3_MQ_HOST=${WEBCENTER__ACTIVEMQ_PORT_5672_TCP_ADDR}
+#       -PONTRACK3_MQ_HOST_FAILOVER=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_ADDR}
+#       -PONTRACK3_MQ_PORT=${WEBCENTER_ACTIVEMQ_PORT_5672_TCP_PORT}
+#       -PONTRACK3_MQ_USER=admin
+#       -PONTRACK3_MQ_PASSWORD=admin
+#       -PUSER_MGMT_SVC=http://localhost:9080
+#       -PUSER_CONTEXT_URI=/v1/users/my-context
+#       -PUSER_CACHE_TIMEOUT=60
+#       -PUSER_CACHE_SIZE=1000
+#       -PUSER_CONTEXT_HEADER=HC-Access-Token
+#       -PSEARCH_API_BASI_URI=http://${SERVICE_HOST}:${SERVICE_PORT_SRCH}
+#       -PNOTIFICATION_POLLER_CRON='0 */10 * ? * *'
+#       -PFCM_SILENT_NOTIFICATION_CRON='0 0/9 * * * ?'
+#       -PASSET_SERVICE_UPDATE_CRON='0 0/10 * * * ?'
+#       -PSNOOZED_POLLER_CRON='0 0 * ? * *'
+#       -PCATALOGUE_DOC_MGMT_SVC=localhost:8084
+#       -PSCHEDULER_POLLER_CRON='0 */10 * ? * *'
+#       -PROOT_LOG_LEVEL=INFO
+#       -PACCESS_KEY=DEFAULT_ACCESS_KEY
+#       -PAPPLICATION_LOG_LEVEL=INFO
+#       -PMOCK_SERVER_HOST="${MOCKSERVER_PORT_1080_TCP_ADDR}"
+#       -PMOCK_SERVER_PORT="${MOCKSERVER_PORT_1080_TCP_PORT}"
+#       -PSEARCH_LABELS_SVC=localhost:8084
+#       -PDISMISS_BATCH_SIZE="1000"
+#       -PDISMISS_CRON="0 0 3 * * ?"
+#       -PALERT_MIGRATION_POLLER="0 0 * * * ?"
+#       -PREFRESH_CONSOLIDATED_DATA_CRON="0 0 23 ? * *"
+#       -PFCM_IOS_FILE_PATH=${FCM_IOS_FILE_PATH}
+#       -PFCM_ANDROID_FILE_PATH=${FCM_ANDROID_FILE_PATH}
+#       -PPUSH_NOTIFICATION_SWITCH=false
+#       -PDEVICE_UUID_ENCRYPTION_KEY=${DEVICE_UUID_ENCRYPTION_KEY}
+
+# #  after_script:
+# #    - mv target/site/serenity target/site/serenity-${CI_JOB_NAME}
+#   artifacts:
+#     when: always
+#     paths:
+#       - build/reports/tests/ContractTest
+
+# .contract_hilti:
+#   <<: *regression_template
+#   variables:
+#     PROFILE: Hilti,Batch
+#     POSTGRES_USER: regression
+#     POSTGRES_PASSWORD: regression
+#     POSTGRES_DB: regression
+#     ALLOW_EMPTY_PASSWORD: "yes"
+#   script: --env MAIN_POSTGRES_USER=${POSTGRES_USER}
+#     --env MAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+#     --env MAIN_POSTGRES_DB=${POSTGRES_DB}
+#     --env MAIN_POSTGRES_HOST=${POSTGRES_PORT_5432_TCP_ADDR}
+#     --env CACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
+#     --env CACHE_REDIS_PORT="6379"
+#     --env CACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
+#     --env CACHE_TYPE=redis
+#     --env USER_CACHE_REDIS_TTL_SECONDS=604800
+#     --env TENANT_CACHE_REDIS_TTL_SECONDS=604800
+#     --env USER_PERMISSION_CACHE_REDIS_TTL_SECONDS=604800
+#     - ./gradlew clean Automation -Pcucumber.options="--tags '@Profile=Common and @Suite=NewContract or @Profile="${PROFILE}" and @Suite=Contract'" aggregate -Phost="${SERVICE_HOST}" -Pport="${SERVICE_PORT_AM}" -PONTRACK3_MQ_SCHEME="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_PROTO}" -PONTRACK3_MQ_HOST="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_ADDR}" -PONTRACK3_MQ_PORT="${WEBCENTER_ACTIVEMQ_PORT_61616_TCP_PORT}" -PONTRACK3_MQ_USER=admin -PONTRACK3_MQ_PASSWORD=admin -PMAIN_POSTGRES_HOST="${POSTGRES_PORT_5432_TCP_ADDR}" -PMAIN_POSTGRES_PORT="5432" -PMAIN_POSTGRES_DB="${POSTGRES_DB}" -PMAIN_POSTGRES_USER="${POSTGRES_USER}" -PMAIN_POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" -PMAIN_POSTGRES_USERMGMT_HOST="${USER_MGMT_DB_PORT_5432_TCP_ADDR}" -PMAIN_POSTGRES_USRMGMT_DB="${POSTGRES_DB}"
+#   only:
+#     - branches
+#   except:
+#     - master
+#     - tags
+
+# schemacrawler:
+#   <<: *regression_template
+#   script:
+#     - docker run --name schemacrawler
+#       --env MAIN_POSTGRES_USER=${POSTGRES_USER}
+#       --env MAIN_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+#       --env MAIN_POSTGRES_DB=${POSTGRES_DB}
+#       --env MAIN_POSTGRES_HOST=${POSTGRES_PORT_5432_TCP_ADDR}
+#       --env CACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR}
+#       --env CACHE_REDIS_PORT="6379"
+#       --env CACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD}
+#       --env CACHE_TYPE=redis
+#       --env USER_CACHE_REDIS_TTL_SECONDS=604800
+#       --env TENANT_CACHE_REDIS_TTL_SECONDS=604800
+#       --env USER_PERMISSION_CACHE_REDIS_TTL_SECONDS=604800
+#       --entrypoint=/opt/schemacrawler/schemacrawler.sh
+#       --volume "$PWD":/code
+#       schemacrawler/schemacrawler:v15.05.01
+#       -server=postgresql
+#       -host=${POSTGRES_PORT_5432_TCP_ADDR}
+#       -user=${POSTGRES_USER}
+#       -password=${POSTGRES_PASSWORD}
+#       -database=${POSTGRES_DB}
+#       -infolevel=standard
+#       -sortcolumns
+#       -command=schema
+#       -outputformat=htmlx
+#       -o /code/schema.html
+#   artifacts:
+#     paths:
+#       - schema.html
+
+# download_openapi:
+#   <<: *regression_template
+#   variables:
+#     PROFILE: Hilti
+#     POSTGRES_USER: regression
+#     POSTGRES_PASSWORD: regression
+#     POSTGRES_DB: regression
+#     ALLOW_EMPTY_PASSWORD: "yes"
+#   cache: {}
+#   script:
+#     - |
+#       ret=$(curl --location --request GET "http://$SERVICE_HOST:$SERVICE_PORT_AM/v1/alert-notification.v1.openapi.yaml" \
+#         --header "HC-Access-Token: $TOKEN" \
+#         --verbose --write "%{http_code}" \
+#         --output alert-notification.v1.openapi.yaml || rc=$?)
+#     - |
+#       if [[ "$ret" -ne "200" ]]; then
+#         echo "could not log in to ONTrack!!!"; exit 1;
+#       fi
+#   after_script:
+#     - export DOCKER_HOST=${DOCKER_PORT_2375_TCP}
+#     - docker stop alert-notification-mgmt || true
+#   rules:
+#     - if: "$CI_COMMIT_TAG || $CI_COMMIT_BRANCH"
+#   artifacts:
+#     when: on_success
+#     paths:
+#       - alert-notification.v1.openapi.yaml
+
+# docs:
+#   stage: release
+#   dependencies:
+#     - unit
+#     - automation_new
+#     - schemacrawler
+#   script:
+#     - mv build/asciidoc/html5 public
+#     - mv schema.html public/schema.html
+#     - mv build/api-spec/* public/
+#     - mv build/reports/jacoco/test/html public/unittests
+# #    - mv target/site/serenity-service_hilti target/site/serenity
+# #    - ./gradlew aggregate
+# #    - mv target/site/serenity public/service_hilti
+#   artifacts:
+#     paths:
+#       - public
 
 # ----------------------------------------------------------------------
 # deploy
 # ----------------------------------------------------------------------
-#pages: &pages_template
-#  stage: deploy
-#  variables:
-#    PIP_DOWNLOAD_CACHE: ${CI_PROJECT_DIR}/.cache
-#    PLANTUML_JAR: ${CI_PROJECT_DIR}/plantuml.jar
-#  dependencies:
-#    - unit
-#    - automation_new
-#    - schemacrawler
-#  script:
-#    - mv build/asciidoc/html5 public
-#    - mv schema.html public/schema.html
-#    - mv build/api-spec/* public/
-#    - mv build/reports/jacoco/test/html public/unittests
-##    - mv target/site/serenity-service_hilti public/service_hilti
-#  artifacts:
-#    paths:
-#      - public
-#  only:
-#    - master
-#
-#pages:build_only:
-#  <<: *pages_template
-#  only:
-#    - branches
-#  except:
-#    - master
-#    - tags
-#
-#docs:package:
-#  stage: deploy
-#  extends: dockerize
-#  variables:
-#    DOCKER_ARGS: "-f docs.dockerfile ."
-#  needs:
-#    - job: docs
-#      artifacts: true
-#  script:
-#    - docker build -t "${CI_REGISTRY_IMAGE}/docs:${CI_COMMIT_TAG}" ${DOCKER_ARGS:-.}
-#    - docker push "${CI_REGISTRY_IMAGE}/docs:${CI_COMMIT_TAG}"
-#  only:
-#    - tags
+# pages: &pages_template
+#   stage: deploy
+#   variables:
+#     PIP_DOWNLOAD_CACHE: ${CI_PROJECT_DIR}/.cache
+#     PLANTUML_JAR: ${CI_PROJECT_DIR}/plantuml.jar
+#   dependencies:
+#     - unit
+#     - automation_new
+#     - schemacrawler
+#   script:
+#     - mv build/asciidoc/html5 public
+#     - mv schema.html public/schema.html
+#     - mv build/api-spec/* public/
+#     - mv build/reports/jacoco/test/html public/unittests
+# #    - mv target/site/serenity-service_hilti public/service_hilti
+#   artifacts:
+#     paths:
+#       - public
+#   only:
+#     - master
 
+# pages:build_only:
+#   <<: *pages_template
+#   only:
+#     - branches
+#   except:
+#     - master
+#     - tags
 
+docs:package:
+  stage: deploy
+  extends: dockerize
+  variables:
+    DOCKER_ARGS: "-f docs.dockerfile ."
+  #   needs:
+  #     - job: docs
+  #       artifacts: true
+  script:
+    - docker build -t "${CI_REGISTRY_IMAGE}/docs:${CI_COMMIT_TAG}" ${DOCKER_ARGS:-.}
+    - docker push "${CI_REGISTRY_IMAGE}/docs:${CI_COMMIT_TAG}"
+  only:
+    - tags
