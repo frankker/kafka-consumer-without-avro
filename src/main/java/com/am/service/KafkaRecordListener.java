@@ -3,6 +3,7 @@ package com.am.service;
 import static com.am.constants.KafkaContants.ASSET_TOPIC;
 
 import com.am.constants.AssetStatusEnum;
+import com.am.dao.AssetRepository;
 import com.am.dao.entity.AssetEntity;
 import com.am.dto.AssetDto;
 import com.am.translator.ObjectTranslator;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class KafkaRecordListener {
+  @Autowired private AssetRepository assetRepository;
   @Autowired private ObjectTranslator objectTranslator;
 
   Logger logger = LoggerFactory.getLogger(KafkaRecordListener.class);
@@ -43,6 +45,7 @@ public class KafkaRecordListener {
       e.printStackTrace();
     }
     AssetEntity assetEntity = buildAssetEntity(assetDto);
+    assetRepository.save(assetEntity);
   }
 
   private AssetEntity buildAssetEntity(AssetDto assetDto) {
