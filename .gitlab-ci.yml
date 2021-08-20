@@ -7,11 +7,11 @@
 # Pipeline variables: https://docs.gitlab.com/ee/ci/variables/
 # ----------------------------------------------------------------------
 include:
-  - template: Code-Quality.gitlab-ci.yml
-  - template: Container-Scanning.gitlab-ci.yml
-  - template: Dependency-Scanning.gitlab-ci.yml
-  - template: License-Scanning.gitlab-ci.yml
-  - template: SAST.gitlab-ci.yml
+#  - template: Code-Quality.gitlab-ci.yml
+#  - template: Container-Scanning.gitlab-ci.yml
+#  - template: Dependency-Scanning.gitlab-ci.yml
+#  - template: License-Scanning.gitlab-ci.yml
+#  - template: SAST.gitlab-ci.yml
 
   - project: "am/gitlab-templates"
     ref: v2
@@ -24,11 +24,11 @@ image: adoptopenjdk:11-jdk-hotspot
 
 stages:
   - verify
-  - test
+#  - test
   - build
   - package
   - validate
-  - release
+#  - release
   - deploy
 
 # ----------------------------------------------------------------------
@@ -61,23 +61,23 @@ cache: &cache_template
 # ----------------------------------------------------------------------
 # static code quality checks
 # ----------------------------------------------------------------------
-#liquibase:
-#  stage: verify
-#  image:
-#    name: alpine/git:latest
-#    entrypoint: [""]
-#  cache: {}
-#  variables:
-#    GIT_DEPTH: 0
-#  script:
-#    - git diff --ignore-submodules --color --name-status --diff-filter=M origin/master src/main/resources/db/changelog/liquibase | tee liquibase_modifications.txt
-#    - echo -e "$(cat liquibase_modifications.txt)"
-#  rules:
-#    - if: $CI_MERGE_REQUEST_ID
-#      when: never
-#    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
-#      exists:
-#        - src/main/resources/db/**/*.xml
+liquibase:
+  stage: verify
+  image:
+    name: alpine/git:latest
+    entrypoint: [""]
+  cache: {}
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - git diff --ignore-submodules --color --name-status --diff-filter=M origin/master src/main/resources/db/changelog/liquibase | tee liquibase_modifications.txt
+    - echo -e "$(cat liquibase_modifications.txt)"
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+      when: never
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      exists:
+        - src/main/resources/db/**/*.xml
 
 encoding:
   image: alpine:3
@@ -138,7 +138,7 @@ jar:
     - ./gradlew -x asciidoc -x check assemble
   artifacts:
     paths:
-      - build/glowroot/glowroot.jar
+#      - build/glowroot/glowroot.jar
       - build/libs/
 
 # ----------------------------------------------------------------------
@@ -219,30 +219,6 @@ container_scanning:
 #      when: never
 #    - if: $CI_COMMIT_BRANCH || $CI_COMMIT_TAG
 
-#.regression_template: &regression_template
-#  stage: validate
-#  tags:
-#    - dind
-#  variables:
-#    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-#    POSTGRES_USER: regression
-#    POSTGRES_PASSWORD: regression
-#    POSTGRES_DB: regression
-#    POSTGRES_ANALYTICS_DB: regression
-#    PROFILE: Hilti,Batch
-#    ALLOW_EMPTY_PASSWORD: "yes"
-#  dependencies: []
-#  services:
-#    - docker:stable-dind
-#    - webcenter/activemq
-#    - redis:5-alpine
-#
-#    - name: postgres:12-alpine
-#      alias: alert_notification_mgmt_db
-#
-#    - name: mockserver/mockserver:mockserver-5.9.0
-#      alias: mockserver
-#
 #  before_script:
 #    - apt-get update -qq
 #    - apt-get install -qq -y netcat curl docker.io > /dev/null
@@ -306,7 +282,7 @@ container_scanning:
 #  script:
 #    - ./gradlew clean Automation aggregate -Pcucumber.options="--tags @Profile=Common,@Profile=${PROFILE}" -Phost="${SERVICE_HOST}" -Pport="${SERVICE_PORT}" -PMAIN_POSTGRES_HOST="${POSTGRES_PORT_5432_TCP_ADDR}" -PMAIN_POSTGRES_PORT="5432" -PMAIN_POSTGRES_DB="${POSTGRES_DB}" -PMAIN_POSTGRES_USER="${POSTGRES_USER}" -PMAIN_POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" -PCACHE_REDIS_HOST_NAME=${REDIS_PORT_6379_TCP_ADDR} -PCACHE_REDIS_PORT="6379" -PCACHE_REDIS_PASSWORD=${ALLOW_EMPTY_PASSWORD} -PCACHE_TYPE=redis -PUSER_CACHE_REDIS_TTL_SECONDS="604800" -PTENANT_CACHE_REDIS_TTL_SECONDS="604800" -PUSER_PERMISSION_CACHE_REDIS_TTL_SECONDS="604800"
 #  after_script:
-##    - mv target/site/serenity target/site/serenity-${CI_JOB_NAME}
+#    #    - mv target/site/serenity target/site/serenity-${CI_JOB_NAME}
 #    - export DOCKER_HOST=${DOCKER_PORT_2375_TCP}
 #    - docker logs alert-notification-mgmt
 #    - docker stop alert-notification-mgmt || true
@@ -642,18 +618,18 @@ container_scanning:
 #    - master
 #    - tags
 #
-#docs:package:
-#  stage: deploy
-#  extends: dockerize
-#  variables:
-#    DOCKER_ARGS: "-f docs.dockerfile ."
-#  needs:
-#    - job: docs
-#      artifacts: true
-#  script:
-#    - docker build -t "${CI_REGISTRY_IMAGE}/docs:${CI_COMMIT_TAG}" ${DOCKER_ARGS:-.}
-#    - docker push "${CI_REGISTRY_IMAGE}/docs:${CI_COMMIT_TAG}"
-#  only:
-#    - tags
+docs:package:
+  stage: deploy
+  extends: dockerize
+  variables:
+    DOCKER_ARGS: "-f docs.dockerfile ."
+  needs:
+    - job: docs
+      artifacts: true
+  script:
+    - docker build -t "${CI_REGISTRY_IMAGE}/docs:${CI_COMMIT_TAG}" ${DOCKER_ARGS:-.}
+    - docker push "${CI_REGISTRY_IMAGE}/docs:${CI_COMMIT_TAG}"
+  only:
+    - tags
 
 
