@@ -1,3 +1,5 @@
+server:
+  port: 8099
 advertised:
   host:
     name: localhost
@@ -34,7 +36,10 @@ kafka:
   brokers:
     urls: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   consumerGroup: ${KAFKA_CONSUMER_GROUP_ID:MS001}
+  consumerGroupInstanceID: ${KAFKA_CONSUMER_GROUP_INTANCE_ID:Pod01}
+  consumerHeartBeatSessionTimeout: ${KAFKA_CONSUMER_HEART_BEAT_SESSION_TIMEOUT:6000}
   autoOffset: ${KAFKA_CONSUMER_OFFSET:earliest}
+  maxPollInterval: ${KAFKA_MAX_POLL_INTERVAL:50000}
   security:
     protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_PLAINTEXT}
     username: ${KAFKA_USERNAME:USERNAME}

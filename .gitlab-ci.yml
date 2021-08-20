@@ -42,16 +42,16 @@ variables:
   SAST_DISABLE_DIND: "true"
   DEVICE_UUID_ENCRYPTION_KEY: "m@Ekqwkqj@kfkej$%%fkjfwkjf$#$#fjfkejfkeV"
 
-cache: &cache_template
-  key:
-    files:
+#cache: &cache_template
+#  key:
+#    files:
 #      - gradle.lockfile
-      - gradle/wrapper/gradle-wrapper.properties
-    prefix: gradle
-  policy: pull
-  paths:
-    - .gradle/wrapper
-    - .gradle/caches
+#      - gradle/wrapper/gradle-wrapper.properties
+#    prefix: gradle
+#  policy: pull
+#  paths:
+#    - .gradle/wrapper
+#    - .gradle/caches
 
 # ----------------------------------------------------------------------
 # static code quality checks
