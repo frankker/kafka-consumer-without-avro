@@ -34,9 +34,15 @@ ext {
 dependencies {
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '2.5.3'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.5.3'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: '2.5.3'
     implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.5'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: '2.5.3'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jersey', version: '2.5.3'
+    implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.23'
+    implementation group: 'org.liquibase', name: 'liquibase-core', version: '4.4.3'
+    implementation group: 'org.liquibase', name: 'liquibase-gradle-plugin', version: '2.0.4'
+    implementation group: 'org.modelmapper', name: 'modelmapper', version: '2.4.4'
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

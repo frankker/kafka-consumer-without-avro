@@ -1,0 +1,84 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# OSX
+.DS_Store
+
+# Sphinx reStructuredText generator for documentation
+/venv/
+.python-version
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Cache and build folders
+.gradletasknamecache
+.cache
+.gradle
+/build/
+/bin/
+/node_modules
+/package-lock.json
+/clair*
+namespaces
+*.patch
+*.cache
+*.png
+
+# editors
+.vscode/
+.settings/
+.idea/
+.project
+.classpath
+
+
+# STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# IntelliJ IDEA
+.idea
+*.iws
+*.iml
+*.ipr
+*.bak
+*.txt
+*.hprof
+/out/
+
+# target folder
+src/test/automation/essentials/testLogs/*
+/target/
+/test-output/
+
+/docker-compose.override.yml

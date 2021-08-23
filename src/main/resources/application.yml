@@ -1,6 +1,5 @@
 server:
-  port: 8083
-
+  port: 8099
 advertised:
   host:
     name: localhost
@@ -17,12 +16,30 @@ management:
     kafka:
       enabled: true
 
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${MAIN_POSTGRES_HOST:localhost}:${MAIN_POSTGRES_PORT:5432}/${MAIN_POSTGRES_DB:kafka-poc}
+    username: ${MAIN_POSTGRES_USER:postgres}
+    password: ${MAIN_POSTGRES_PASSWORD:postgres}
+    hikari:
+      connectionTimeout: ${HIKARI_CONNECTION_TIMEOUT:20000}
+      minimumIdle: ${MINIMUM_IDLE:5}
+      maximumPoolSize: ${MAXIMUM_POOL_SIZE:300}
+      idleTimeout: ${IDLE_TIMEOUT:740000}
+      maxLifetime: ${MAX_LIFETIME:1740000}
+  liquibase:
+    enabled: true
+    change-log: db.changelog-master.xml
+
 kafka:
   brokers:
-    broker1:
-      url: localhost:9092
-  consumerGroup: cgroup
-  autoOffset: earliest
+    urls: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  consumerGroup: ${KAFKA_CONSUMER_GROUP_ID:MS001}
+  consumerGroupInstanceID: ${KAFKA_CONSUMER_GROUP_INTANCE_ID:Pod01}
+  consumerHeartBeatSessionTimeout: ${KAFKA_CONSUMER_HEART_BEAT_SESSION_TIMEOUT:6000}
+  autoOffset: ${KAFKA_CONSUMER_OFFSET:earliest}
+  maxPollInterval: ${KAFKA_MAX_POLL_INTERVAL:50000}
   security:
     protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_PLAINTEXT}
     username: ${KAFKA_USERNAME:USERNAME}

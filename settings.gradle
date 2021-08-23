@@ -3,4 +3,5 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = 'Kafka Consumer Without Avro'
+rootProject.name = 'kafka-consumer'
+enableFeaturePreview('ONE_LOCKFILE_PER_PROJECT')

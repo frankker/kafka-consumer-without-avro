@@ -1,0 +1,5 @@
+*
+!build/libs
+build/libs/*-stubs.jar
+!public
+!libs
