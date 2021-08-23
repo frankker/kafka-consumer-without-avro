@@ -22,6 +22,8 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
+import org.springframework.kafka.listener.AbstractMessageListenerContainer;
+import org.springframework.kafka.listener.ContainerProperties;
 
 @Configuration
 @EnableKafka
@@ -32,6 +34,15 @@ public class KafkaConfiguration {
 
   @Value("${kafka.consumerGroup}")
   private String consumerGroup;
+
+  @Value("${kafka.consumerGroupInstanceID}")
+  private String consumerGroupInstanceID;
+
+  @Value("${kafka.consumerHeartBeatSessionTimeout}")
+  private String consumerHeartBeatSessionTimeout;
+
+  @Value("${kafka.maxPollInterval}")
+  private int maxPollInterval;
 
   @Value("${kafka.autoOffset}")
   private String autoOffset;
@@ -54,6 +65,7 @@ public class KafkaConfiguration {
     ConcurrentKafkaListenerContainerFactory<Long, String> factory =
         new ConcurrentKafkaListenerContainerFactory<>();
     factory.setConsumerFactory(consumerFactory);
+    factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
     return factory;
   }
 
@@ -69,6 +81,13 @@ public class KafkaConfiguration {
     props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffset);
     props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, LongDeserializer.class);
     props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+    props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, consumerGroupInstanceID);
+    //auto commit settings
+    props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+    props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollInterval);
+    //static membership
+    props.put(ConsumerConfig.GROUP_INSTANCE_ID_CONFIG, consumerGroupInstanceID);
+    props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, consumerHeartBeatSessionTimeout);
     // Security config
     final String saslJaasConfigString =
         MessageFormat.format(

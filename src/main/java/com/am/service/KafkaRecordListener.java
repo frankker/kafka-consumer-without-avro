@@ -14,7 +14,9 @@ import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -25,13 +27,17 @@ public class KafkaRecordListener {
   @Autowired private AssetRepository assetRepository;
   @Autowired private ObjectTranslator objectTranslator;
 
+  @Value("${kafka.maxPollInterval}")
+  private int maxPollInterval;
+
   Logger logger = LoggerFactory.getLogger(KafkaRecordListener.class);
 
   @KafkaListener(topics = ASSET_TOPIC)
   void listenToAsset(
       @Payload String message,
       @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
-      @Header(KafkaHeaders.OFFSET) int offset) {
+      @Header(KafkaHeaders.OFFSET) int offset,
+      Acknowledgment acknowledgment) {
     logger.debug("===============Kafka Asset Message================");
     logger.info(
         MessageFormat.format(
@@ -45,7 +51,17 @@ public class KafkaRecordListener {
       e.printStackTrace();
     }
     AssetEntity assetEntity = buildAssetEntity(assetDto);
-    assetRepository.save(assetEntity);
+
+//    acknowledgment.acknowledge();
+    if (offset % 2 == 0) {
+      System.out.println("Not consuming::" + message);
+      acknowledgment.nack(maxPollInterval - 2000);
+    }
+    else {
+      System.out.println("Produced and consumed::" + message);
+      acknowledgment.acknowledge();
+    }
+//    assetRepository.save(assetEntity);
   }
 
   private AssetEntity buildAssetEntity(AssetDto assetDto) {
