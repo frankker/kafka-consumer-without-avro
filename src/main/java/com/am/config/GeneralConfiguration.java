@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class AlertNotificationManagementConfiguration {
+public class GeneralConfiguration {
 
   @Bean("alertModelMapper")
   public ModelMapper getModelMapper() {

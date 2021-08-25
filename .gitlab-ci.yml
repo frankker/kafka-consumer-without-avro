@@ -130,7 +130,7 @@ liquibase:
 jar:
   stage: build
   script:
-    - ./gradlew -x asciidoc -x check assemble
+    - ./gradlew -x check assemble
   artifacts:
     paths:
       #   - build/glowroot/glowroot.jar
