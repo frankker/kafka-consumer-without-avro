@@ -1,0 +1,59 @@
+server:
+  port: 8099
+advertised:
+  host:
+    name: localhost
+
+management:
+  endpoint:
+    info:
+      enabled: true
+    health:
+      show-details: always
+  endpoints:
+    enabled-by-default: true
+  health:
+    kafka:
+      enabled: true
+
+spring:
+  kafka:
+#    jaas:
+#      enabled: ${KAFKA_JAAS:true}
+#    properties:
+#      security:
+#        protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_PLAINTEXT}
+#      sasl:
+#        mechanism: ${KAFKA_SECURITY_MECHANISM:SCRAM-SHA-512}
+#        jaas:
+#          config: ${KAFKA_SASL_JAAS_CONFIG:org.apache.kafka.common.security.scram.ScramLoginModule required username="USERNAME" password="PASSWORD";}
+    consumer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:MS001}
+      auto-offset-reset: ${KAFKA_CONSUMER_OFFSET:earliest}
+      heartbeat-interval: ${KAFKA_CONSUMER_HEART_BEAT_SESSION_TIMEOUT:6000}
+      enable-auto-commit: ${KAFKA_AUTO_COMMIT:false}
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      poll-timeout: ${KAFKA_MAX_POLL_INTERVAL:50000}
+      ack-mode: ${KAFKA_ACK_MODE:manual-immediate}
+
+    producer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${MAIN_POSTGRES_HOST:localhost}:${MAIN_POSTGRES_PORT:5432}/${MAIN_POSTGRES_DB:kafka-poc}
+    username: ${MAIN_POSTGRES_USER:postgres}
+    password: ${MAIN_POSTGRES_PASSWORD:postgres}
+    hikari:
+      connectionTimeout: ${HIKARI_CONNECTION_TIMEOUT:20000}
+      minimumIdle: ${MINIMUM_IDLE:5}
+      maximumPoolSize: ${MAXIMUM_POOL_SIZE:300}
+      idleTimeout: ${IDLE_TIMEOUT:740000}
+      maxLifetime: ${MAX_LIFETIME:1740000}
+  liquibase:
+    enabled: true
+    change-log: db.changelog-master.xml

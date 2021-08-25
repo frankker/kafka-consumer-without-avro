@@ -1,0 +1,84 @@
+<?xml version ="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+	http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+  <changeSet author="alert-notification-mgmt" runInTransaction="false" id="2021.1.1">
+
+    <createTable tableName="asset">
+      <column name="asset_id" type="bigint">
+        <constraints primaryKey="true" nullable="false" />
+      </column>
+      <column name="tenant_id" type="bigint" />
+      <column name="responsible_employee_id" type="bigint">
+      </column>
+      <column name="responsible_employee_name"
+        type="character varying(255)">
+      </column>
+<!--      <column name="responsible_employee_email" type="character varying(255)" />-->
+<!--      <column name="responsible_employee_language" type="character varying(255)" />-->
+      <column name="name" type="character varying(255)" />
+      <column name="owner_id" type="bigint" />
+      <column name="owner_name" type="character varying(255)" />
+      <column name="description" type="character varying(1024)" />
+      <column name="asset_status" type="varchar(255)" />
+      <column name="created_at" type="timestamp" />
+      <column name="updated_at" type="timestamp" />
+      <column name="created_by" type="varchar(255)" />
+      <column name="updated_by" type="varchar(255)" />
+      <column name="model" type="varchar(255)" />
+      <column name="inventory_number" type="varchar(255)" />
+      <column name="parent_id" type="numeric" />
+      <column name="asset_type_code" type="character varying(36)" />
+      <column name="material_number" type="character varying(36)" />
+      <column name="hilti_cloud_id" type="character varying(255)" />
+      <column name="is_registered" type="boolean" />
+      <column name="origin_equipment_number" type="character varying(64)" />
+      <column name="hilti_integrated_asset" type="boolean" />
+      <column name="scan_code_type_code" type="varchar(255)"/>
+      <column name="scan_code" type="varchar(255)"/>
+      <column name="previous_owner_id" type="bigint"/>
+<!--      <column name="registered_date" type="varchar(255)"/>-->
+      <column name="manufacturer_name" type="varchar(255)"/>
+      <column name="storage_location" type="varchar(255)"/>
+      <column name="default_location_id" type="bigint"/>
+      <column name="default_location_name" type="varchar(255)"/>
+      <column name="current_location_id" type="bigint"/>
+      <column name="current_location_name" type="varchar(255)"/>
+      <column name="loan_end_date" type="varchar(255)"/>
+      <column name="rental_tool_claim" type="varchar(255)"/>
+      <column name="rental_return_date" type="varchar(255)"/>
+<!--      <column name="fleet_delivery_date" type="varchar(255)"/>-->
+      <column name="fleet_exchange_or_warranty_date" type="varchar(255)"/>
+      <column name="fleet_inventory_number" type="varchar(255)"/>
+      <column name="warranty_expiration_date" type="varchar(255)"/>
+      <column name="purchase_order_number" type="varchar(255)"/>
+      <column name="tool_id" type="bigint"/>
+<!--      <column name="inventory_number_type_details" type="varchar(255)"/>-->
+      <column name="ownership_type_code" type="varchar(255)"/>
+      <column name="serial_number" type="varchar(255)"/>
+<!--      <column name="asset_category_code" type="varchar(255)"/>-->
+<!--      <column name="asset_state_code" type="varchar(255)"/>-->
+<!--      <column name="cost_code" type="varchar(255)"/>-->
+      <column name="fleet_organization_reference_number" type="varchar(255)"/>
+<!--      <column name="fleet_cost_center" type="varchar(255)"/>-->
+<!--      <column name="fleet_purchase_order_number" type="varchar(255)"/>-->
+<!--      <column name="monthly_fleet_rate" type="varchar(255)"/>-->
+<!--      <column name="fleet_currency_code" type="varchar(255)"/>-->
+<!--      <column name="loan_tool_claim" type="varchar(255)"/>-->
+<!--      <column name="theft_insurance" type="varchar(255)"/>-->
+      <column name="purchase_date" type="varchar(255)"/>
+<!--      <column name="purchase_price" type="varchar(255)"/>-->
+<!--      <column name="replacement_cost" type="varchar(255)"/>-->
+<!--      <column name="purchase_currency_code" type="varchar(255)"/>-->
+<!--      <column name="vendor" type="varchar(255)"/>-->
+<!--      <column name="rental_start_date" type="varchar(255)"/>-->
+<!--      <column name="loan_start_date" type="varchar(255)"/>-->
+      <column name="version" type="bigint" defaultValueNumeric="0"/>
+    </createTable>
+
+  </changeSet>
+
+</databaseChangeLog>

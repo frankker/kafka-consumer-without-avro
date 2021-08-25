@@ -1,0 +1,96 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:4.5.1"
+    }
+}
+plugins {
+    id 'org.springframework.boot' version '2.4.9'
+    id 'java'
+}
+apply plugin: "com.diffplug.gradle.spotless"
+apply plugin: 'io.spring.dependency-management'
+
+sourceCompatibility = '11'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url = 'http://packages.confluent.io/maven/' }
+}
+
+ext {
+    confluentVersion = '6.2.0'
+}
+
+dependencies {
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '2.5.3'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: '2.5.3'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: '2.5.3'
+    implementation group: 'org.springframework.kafka', name: 'spring-kafka', version: '2.7.5'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version: '2.5.3'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jersey', version: '2.5.3'
+    implementation group: 'org.postgresql', name: 'postgresql', version: '42.2.23'
+    implementation group: 'org.liquibase', name: 'liquibase-core', version: '4.4.3'
+    implementation group: 'org.liquibase', name: 'liquibase-gradle-plugin', version: '2.0.4'
+    implementation group: 'org.modelmapper', name: 'modelmapper', version: '2.4.4'
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.12.0'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+check.dependsOn 'spotlessCheck'
+
+spotless {
+
+    def formatterGroovyConfig = rootProject.file('./formatter.properties')
+
+    java {
+        paddedCell()
+        target fileTree('.') {
+            include '**/*.java'
+            exclude '**/build/**'
+        }
+        googleJavaFormat()
+        removeUnusedImports()
+    }
+    groovyGradle {
+        paddedCell()
+        target fileTree('.') {
+            include '**/*.gradle'
+            exclude '**/build/**'
+        }
+        // Generate new formatter.properties file in eclipse:
+        // https://github.com/diffplug/spotless/blob/master/ECLIPSE_SCREENSHOTS.md
+        greclipse().configFile formatterGroovyConfig
+        indentWithSpaces(4)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format 'misc', {
+        target fileTree('.') {
+            include '**/*.md', '**/*.adoc', '**/.gitignore', '**/*.properties', '**/*.config'
+            exclude '**/build/**', '**/gradle/**', 'bin/**', 'src/main/resources/**', '.gradle/**'
+        }
+
+        indentWithSpaces(2)
+        trimTrailingWhitespace()
+        endWithNewline()
+        replaceRegex 'Remove line breaks between consecutive closing parentheses', /\)\n[\s]+\)\n/, '))\n'
+    }
+}

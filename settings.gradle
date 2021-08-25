@@ -1,0 +1,7 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+rootProject.name = 'kafka-consumer'
+enableFeaturePreview('ONE_LOCKFILE_PER_PROJECT')
