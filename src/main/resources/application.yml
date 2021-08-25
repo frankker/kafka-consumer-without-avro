@@ -17,6 +17,32 @@ management:
       enabled: true
 
 spring:
+  kafka:
+#    jaas:
+#      enabled: ${KAFKA_JAAS:true}
+#    properties:
+#      security:
+#        protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_PLAINTEXT}
+#      sasl:
+#        mechanism: ${KAFKA_SECURITY_MECHANISM:SCRAM-SHA-512}
+#        jaas:
+#          config: ${KAFKA_SASL_JAAS_CONFIG:org.apache.kafka.common.security.scram.ScramLoginModule required username="USERNAME" password="PASSWORD";}
+    consumer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:MS001}
+      auto-offset-reset: ${KAFKA_CONSUMER_OFFSET:earliest}
+      heartbeat-interval: ${KAFKA_CONSUMER_HEART_BEAT_SESSION_TIMEOUT:6000}
+      enable-auto-commit: ${KAFKA_AUTO_COMMIT:false}
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      poll-timeout: ${KAFKA_MAX_POLL_INTERVAL:50000}
+      ack-mode: ${KAFKA_ACK_MODE:manual-immediate}
+
+    producer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${MAIN_POSTGRES_HOST:localhost}:${MAIN_POSTGRES_PORT:5432}/${MAIN_POSTGRES_DB:kafka-poc}
@@ -31,17 +57,3 @@ spring:
   liquibase:
     enabled: true
     change-log: db.changelog-master.xml
-
-kafka:
-  brokers:
-    urls: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  consumerGroup: ${KAFKA_CONSUMER_GROUP_ID:MS001}
-  consumerGroupInstanceID: ${KAFKA_CONSUMER_GROUP_INTANCE_ID:Pod01}
-  consumerHeartBeatSessionTimeout: ${KAFKA_CONSUMER_HEART_BEAT_SESSION_TIMEOUT:6000}
-  autoOffset: ${KAFKA_CONSUMER_OFFSET:earliest}
-  maxPollInterval: ${KAFKA_MAX_POLL_INTERVAL:50000}
-  security:
-    protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_PLAINTEXT}
-    username: ${KAFKA_USERNAME:USERNAME}
-    password: ${KAFKA_PASSWORD:PASSWORD}
-    mechanism: ${KAFKA_SECURITY_MECHANISM:SCRAM-SHA-512}

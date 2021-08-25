@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class KafkaHealthIndicator implements HealthIndicator {
 
-  @Value("${kafka.brokers.urls}")
+  @Value("${spring.kafka.consumer.bootstrap-servers}")
   private String kafkaBroker;
 
   @Override
