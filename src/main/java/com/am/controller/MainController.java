@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/kafka")
+@RequestMapping("/v1/kafka")
 public class MainController {
 
   private final KafkaRecordProducer kafkaRecordProducer;
@@ -19,8 +19,8 @@ public class MainController {
 
   @PutMapping("/create")
   public void createMessage(@RequestBody() AssetDto assetDto) throws InterruptedException {
-    System.out.println("Sending alertDto " + assetDto);
+    System.out.println("Sending assetDto " + assetDto);
     kafkaRecordProducer.send(assetDto);
-    System.out.println("alertDto sent " + assetDto);
+    System.out.println("assetDto sent " + assetDto);
   }
 }
