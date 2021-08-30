@@ -14,10 +14,15 @@ import org.apache.commons.lang3.EnumUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.retrytopic.TopicSuffixingStrategy;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,11 +32,17 @@ public class KafkaRecordListener {
 
   Logger logger = LoggerFactory.getLogger(KafkaRecordListener.class);
 
+  @RetryableTopic(
+      attempts = "3",
+      backoff = @Backoff(delay = 1000, multiplier = 2.0),
+      autoCreateTopics = "true",
+      topicSuffixingStrategy = TopicSuffixingStrategy.SUFFIX_WITH_INDEX_VALUE)
   @KafkaListener(topics = ASSET_TOPIC)
   void listenToAsset(
       @Payload String message,
       @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
-      @Header(KafkaHeaders.OFFSET) int offset) {
+      @Header(KafkaHeaders.OFFSET) int offset,
+      Acknowledgment acknowledgment) throws Exception {
     logger.debug("===============Kafka Asset Message================");
     logger.info(
         MessageFormat.format(
@@ -46,10 +57,25 @@ public class KafkaRecordListener {
     }
     AssetEntity assetEntity = buildAssetEntity(assetDto);
 
-    System.out.println("Produced and consumed::" + message);
+
     //    acknowledgment.acknowledge();
 
-    assetRepository.save(assetEntity);
+    if (assetDto.getAssetId() % 2 == 0) {
+      acknowledgment.acknowledge();
+      logger.info("Error occurred for " + assetDto.getAssetId());
+      throw new Exception();
+    } else {
+      logger.info("Produced and consumed::" + message);
+      acknowledgment.acknowledge();
+      assetRepository.save(assetEntity);
+    }
+
+  }
+
+  @DltHandler
+  public void dlt(String in, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+    logger.info("Adding to DLT for " + topic + " - " + in);
+    acknowledgment.acknowledge();
   }
 
   private AssetEntity buildAssetEntity(AssetDto assetDto) {
