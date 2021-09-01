@@ -42,7 +42,8 @@ public class KafkaRecordListener {
       @Payload String message,
       @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
       @Header(KafkaHeaders.OFFSET) int offset,
-      Acknowledgment acknowledgment) throws Exception {
+      Acknowledgment acknowledgment)
+      throws Exception {
     logger.debug("===============Kafka Asset Message================");
     logger.info(
         MessageFormat.format(
@@ -57,7 +58,6 @@ public class KafkaRecordListener {
     }
     AssetEntity assetEntity = buildAssetEntity(assetDto);
 
-
     //    acknowledgment.acknowledge();
 
     if (assetDto.getAssetId() % 2 == 0) {
@@ -69,11 +69,11 @@ public class KafkaRecordListener {
       acknowledgment.acknowledge();
       assetRepository.save(assetEntity);
     }
-
   }
 
   @DltHandler
-  public void dlt(String in, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
+  public void dlt(
+      String in, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment acknowledgment) {
     logger.info("Adding to DLT for " + topic + " - " + in);
     acknowledgment.acknowledge();
   }
