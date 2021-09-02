@@ -33,6 +33,7 @@ public class KafkaRecordListener {
   Logger logger = LoggerFactory.getLogger(KafkaRecordListener.class);
 
   @RetryableTopic(
+      exclude = {java.lang.ArithmeticException.class, java.lang.IllegalArgumentException.class},
       attempts = "3",
       backoff = @Backoff(delay = 1000, multiplier = 2.0),
       autoCreateTopics = "true",
@@ -60,11 +61,22 @@ public class KafkaRecordListener {
 
     //    acknowledgment.acknowledge();
 
-    if (assetDto.getAssetId() % 2 == 0) {
+    if (assetDto.getAssetId() % 3 == 0) {
       acknowledgment.acknowledge();
       logger.info("Error occurred for " + assetDto.getAssetId());
-      throw new Exception();
-    } else {
+      throw new ArithmeticException();
+    }
+    else if (assetDto.getAssetId() % 5 == 0) {
+      acknowledgment.acknowledge();
+      logger.info("Error occurred for " + assetDto.getAssetId());
+      throw new RuntimeException();
+    }
+    else if (assetDto.getAssetId() % 7 == 0) {
+      acknowledgment.acknowledge();
+      logger.info("Error occurred for " + assetDto.getAssetId());
+      throw new IllegalArgumentException();
+    }
+    else {
       logger.info("Produced and consumed::" + message);
       acknowledgment.acknowledge();
       assetRepository.save(assetEntity);

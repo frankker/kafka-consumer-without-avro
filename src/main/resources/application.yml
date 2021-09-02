@@ -1,5 +1,5 @@
 server:
-  port: ${application_port:8088}
+  port: ${application_port:8080}
 advertised:
   host:
     name: localhost
